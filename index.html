@@ -10,65 +10,104 @@
     <header class="topbar">
       <h1>katana-helper</h1>
       <span id="status" class="pill" data-state="idle">Nicht verbunden</span>
+      <span id="patch-title" class="patch-title"></span>
       <span class="spacer"></span>
       <button id="connect">Verbinden</button>
       <button id="disconnect" class="secondary" hidden>Trennen</button>
     </header>
 
-    <main class="layout">
-      <section class="card" aria-labelledby="dev-title">
-        <h2 id="dev-title">Gerät</h2>
-        <p id="hint" class="hint"></p>
+    <p id="hint" class="banner"></p>
 
-        <dl class="facts">
-          <dt>Gerät</dt>
-          <dd id="f-device">–</dd>
-          <dt>Version</dt>
-          <dd id="f-version">–</dd>
-          <dt>Kanal</dt>
-          <dd id="f-channel">–</dd>
-          <dt>Aktueller Klang</dt>
-          <dd id="f-patch">–</dd>
-          <dt>Panel-Speicher</dt>
-          <dd id="f-panel">–</dd>
-          <dt>Edit-Mode</dt>
-          <dd id="f-edit">–</dd>
-          <dt>MIDI-Ports</dt>
-          <dd id="f-ports">–</dd>
-        </dl>
+    <main class="page">
+      <fieldset id="editor" class="editor" disabled>
+        <legend class="sr-only">Editor</legend>
 
-        <div class="row">
-          <button id="refresh" class="secondary" disabled>Neu lesen</button>
+        <section class="card channels" aria-labelledby="ch-title">
+          <h2 id="ch-title">Kanal</h2>
+          <div id="channels" class="segmented" role="radiogroup" aria-labelledby="ch-title"></div>
+          <p class="note">Beim Kanalwechsel gehen nicht gespeicherte Änderungen verloren, wie am Amp.</p>
+        </section>
+
+        <div class="editor-grid">
+          <section class="card" aria-labelledby="amp-title">
+            <h2 id="amp-title">Amp</h2>
+            <div class="field">
+              <span class="field-label" id="type-label">Typ</span>
+              <div id="amp-type" class="segmented" role="radiogroup" aria-labelledby="type-label"></div>
+            </div>
+            <label class="field">
+              <span class="field-label">Modell <span id="variation" class="badge" hidden>Variation</span></span>
+              <select id="amp-model"></select>
+            </label>
+            <div id="knobs" class="knobs"></div>
+          </section>
+
+          <section class="card" aria-labelledby="fx-title">
+            <h2 id="fx-title">Effekte</h2>
+            <div id="effects" class="effects"></div>
+          </section>
         </div>
 
-        <details id="manual">
-          <summary>Ports von Hand wählen</summary>
-          <div class="ports">
-            <label>Eingang <select id="in-port"></select></label>
-            <label>Ausgang <select id="out-port"></select></label>
-          </div>
-          <button id="manual-connect" class="secondary">Mit diesen Ports verbinden</button>
-        </details>
-      </section>
+        <section class="card session">
+          <span id="session-text" class="session-text">–</span>
+          <span class="spacer"></span>
+          <button id="undo" class="secondary" type="button" disabled>Änderungen zurücknehmen</button>
+          <button id="reload" class="secondary" type="button">Neu lesen</button>
+          <button id="backup" class="secondary" type="button">Backup speichern</button>
+        </section>
+      </fieldset>
 
-      <section class="card log-card" aria-labelledby="log-title">
-        <div class="log-head">
-          <h2 id="log-title">Debug-Log</h2>
-          <div class="log-tools">
-            <label class="check"><input type="checkbox" id="opt-raw" /> Hex</label>
-            <label class="check"><input type="checkbox" id="opt-amp" checked /> Amp-Meldungen</label>
-            <label class="check"><input type="checkbox" id="opt-follow" checked /> Mitlaufen</label>
-            <button id="log-copy" class="small secondary">Kopieren</button>
-            <button id="log-save" class="small secondary">Als Datei</button>
-            <button id="log-clear" class="small secondary">Leeren</button>
+      <details id="debug" class="card debug">
+        <summary>Debug: Gerät, Ports und Log</summary>
+
+        <div class="debug-grid">
+          <div>
+            <dl class="facts">
+              <dt>Gerät</dt>
+              <dd id="f-device">–</dd>
+              <dt>Version</dt>
+              <dd id="f-version">–</dd>
+              <dt>Kanal</dt>
+              <dd id="f-channel">–</dd>
+              <dt>Aktueller Klang</dt>
+              <dd id="f-patch">–</dd>
+              <dt>Panel-Speicher</dt>
+              <dd id="f-panel">–</dd>
+              <dt>Edit-Mode</dt>
+              <dd id="f-edit">–</dd>
+              <dt>MIDI-Ports</dt>
+              <dd id="f-ports">–</dd>
+            </dl>
+            <details id="manual">
+              <summary>Ports von Hand wählen</summary>
+              <div class="ports">
+                <label>Eingang <select id="in-port"></select></label>
+                <label>Ausgang <select id="out-port"></select></label>
+              </div>
+              <button id="manual-connect" class="secondary">Mit diesen Ports verbinden</button>
+            </details>
+          </div>
+
+          <div class="log-card">
+            <div class="log-head">
+              <h2>Log</h2>
+              <div class="log-tools">
+                <label class="check"><input type="checkbox" id="opt-raw" /> Hex</label>
+                <label class="check"><input type="checkbox" id="opt-amp" checked /> Amp-Meldungen</label>
+                <label class="check"><input type="checkbox" id="opt-follow" checked /> Mitlaufen</label>
+                <button id="log-copy" class="small secondary">Kopieren</button>
+                <button id="log-save" class="small secondary">Als Datei</button>
+                <button id="log-clear" class="small secondary">Leeren</button>
+              </div>
+            </div>
+            <div id="log" class="log" role="log" aria-live="off"></div>
           </div>
         </div>
-        <div id="log" class="log" role="log" aria-live="off"></div>
-      </section>
+      </details>
     </main>
 
     <footer class="foot">
-      Nur Google Chrome am Mac mit BOSS-KATANA-Treiber.
+      Nur Google Chrome am Mac mit BOSS-KATANA-Treiber. Speichert nie in einen Kanal.
       <a href="probe/">Diagnose-Seite (USB-Test)</a>
     </footer>
 

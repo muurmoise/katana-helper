@@ -57,12 +57,29 @@ Verhalten:
 - Verbindet von selbst neu, wenn der Amp wieder auftaucht.
 - Schaltet den Edit-Mode beim Trennen und beim Schließen des Tabs (`pagehide`) aus.
 
-### Phase 2 – Regler live
+### Phase 2 – Regler live ← umgesetzt, Schreibtest am Amp durch Martin ausstehend
 
-Amp-Typ, Gain, Volume, EQ, Effekte an/aus + Typ, Kanalwechsel, live in beide Richtungen.
-Dazu gehören die offenen Prüfpunkte aus `docs/device-test.md` Teil 3 (Amp-Typ, Kanalwechsel,
-Delay 2). Farbwerte und Regler-Adressen sind geklärt (`docs/protocol.md` 6.2, 7.3).
-Schreibtests nur nach Backup.
+Kanal (Panel, A1–B4), Amp-Typ (Schalter `06 50`) und Modell (`00 21`, alle 30), Gain, Bass,
+Middle, Treble, Presence, Volume (`06 5x`), fünf Effekte mit an/aus, Farbe und Typ. Live in
+beide Richtungen: Bewegungen am Amp erscheinen sofort im Editor.
+
+| Datei | Aufgabe |
+| --- | --- |
+| `src/lib/patch.js` | Wo welcher Regler liegt (`AMP`, `KNOBS`, `EFFECTS`), `PatchState` (Bytes nach Adresse), Backup-Format |
+| `src/lib/editor.js` | `Editor`: Patch lesen, Werte setzen (gedrosselt), zurücklesen, Rückgängig, Kanalwechsel, Meldungen vom Amp |
+| `src/lib/testing/fake-katana.js` | Simulierter Amp mit Speicher für Tests |
+| `src/app/editor-ui.js`, `src/app/log-ui.js` | Oberfläche |
+
+Sicherheitsregeln im Code:
+- Nach jedem Verbinden und Kanalwechsel liest der Editor den ganzen Patch. Der dient als
+  Ausgangspunkt für „Änderungen zurücknehmen“ und als Backup („Backup speichern“, JSON).
+- Nach jedem Schreiben liest der Editor den Wert zurück und loggt „Bestätigt“ oder die
+  Abweichung, dazu verwandte Adressen (z. B. nach `06 50` auch `00 21`).
+- `KatanaClient.write` lehnt den Speicherbefehl `7F 00 01 04` ab.
+- Antworten an andere MIDI-Programme (zweiter Tab) lösen keinen Neu-Lesevorgang aus.
+
+Offen: Martins Schreibtest nach `docs/device-test.md` Teil 3, danach Status in
+`docs/protocol.md` nachtragen. Delay 2 und die Effekt-Regler fehlen noch im Editor.
 
 ### Phase 3 – Patches/Presets
 

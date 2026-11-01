@@ -150,6 +150,12 @@ F0 41 00 00 00 00 33 11  a1 a2 a3 a4  s1 s2 s3 s4  sum F7
   gibt es nicht, er wird übersprungen. Antwortzeit pro Nachricht etwa 35 ms.
   Status: GETESTET (eigen).
 - Laut Q1 und Q4 sollte vor RQ1 der Edit-Mode aktiv sein (Abschnitt 3).
+- **Mehrere MIDI-Programme gleichzeitig** (zwei Browser-Tabs, App und Diagnose-Seite):
+  Die Antworten des Amps tragen keinen Empfänger. Unter macOS sieht jedes Programm am Port
+  „KATANA“ auch die Antworten auf die Anfragen der anderen. Eine Antwort auf `00 01 00 00`
+  sieht deshalb aus wie ein Kanalwechsel am Amp. katana-helper reagiert nur, wenn sich der
+  Kanal wirklich geändert hat. Sonst schaukeln sich zwei Tabs endlos hoch (am 2026-11-01
+  beobachtet und behoben). Status: GETESTET (eigen).
 
 Status: GETESTET (Q4).
 
@@ -293,8 +299,15 @@ Beim Drehen am GAIN-Regler meldet der Amp **beide** Adressen, immer zuerst `00 2
 **`00 22` ≈ 0,8 × `06 51` + 20** (gemessen: 19 → 35, 33 → 46, 51 → 61, 70 → 76). Beim
 schnellen Drehen hinkt `00 22` etwas hinterher, als würde es geglättet. Deutung:
 `06 51` ist die Reglerstellung, `00 22` der daraus berechnete interne Gain-Wert. Ob die
-Formel bei anderen Amp-Typen gleich ist: UNVERIFIZIERT. Für katana-helper bleibt
+Formel bei anderen Amp-Typen gleich ist: UNVERIFIZIERT. Ein zweiter Log mit Amp-Typ
+Crunch passt zur selben Formel (46 → 57, 42 → 54, 39 → 51). Bass und Middle melden dagegen
+in `00 24`/`06 53` und `00 25`/`06 54` **denselben** Wert. Für katana-helper bleibt
 `06 51` die richtige Adresse (GETESTET (eigen), lesend).
+
+**Schreiben (eigener Test 2026-11-01):** `06 51` mit dem gerade eingestellten Wert
+geschrieben und zurückgelesen: übernommen. Danach meldet `00 22` den passenden internen
+Wert. Ob ein **geänderter** Wert den Klang hörbar ändert, prüft Martin mit dem Editor
+(`docs/device-test.md` Teil 3).
 
 Die Preamp-Alternativen sind **UNVERIFIZIERT** als Schreibadressen. Q3 widerspricht sich
 bei Gain/Volume selbst (`doc/Adresses.txt` nennt die `00 2x`-Adressen als Schreibziel,
@@ -385,13 +398,16 @@ Status: GETESTET (eigen), lesend.
 | LED | Adresse | Werte | Quelle | Status |
 | --- | --- | --- | --- | --- |
 | Variation | `60 00 06 5C` | `00` aus, `01` an | Q2 `midi.xml` (Panel `5C`) | GETESTET (Q4) |
-| Booster | `60 00 06 5D` | wie oben | Q2 (Panel `5D`) | QUELLEN |
-| MOD | `60 00 06 5E` | wie oben | Q2 (Panel `5E`) | GETESTET (eigen) |
-| FX | `60 00 06 5F` | wie oben | Q2 (Panel `5F`) | QUELLEN |
-| Delay 1 | `60 00 06 60` | wie oben | Q2 (Panel `60`) | QUELLEN |
-| Reverb/Delay 2 | `60 00 06 61` | wie oben | Q2 (Panel `61`) | QUELLEN |
+| Booster | `60 00 06 5D` | `00` aus, `01` grün, `02` rot, `03` gelb | eigener Test, Q2 (Panel `5D`) | GETESTET (eigen) für `00`/`02` |
+| MOD | `60 00 06 5E` | wie Booster | eigener Test, Q2 | GETESTET (eigen) für `01` |
+| FX | `60 00 06 5F` | wie Booster | Q2 | QUELLEN |
+| Delay 1 | `60 00 06 60` | wie Booster | eigener Test, Q2 | GETESTET (eigen) für `01` |
+| Reverb/Delay 2 | `60 00 06 61` | wie Booster | eigener Test, Q2 | GETESTET (eigen) für `00`/`02` |
 
-Status QUELLEN heißt hier: nur Q2, aber dieselbe Tabelle wie die bestätigte MOD-LED.
+**Abweichung von Q2:** Q2 kennt nur `00` aus / `01` an. Am eigenen Amp melden die
+Effekt-LEDs auch die Farbe: Booster und Reverb in Rot (Farbe `01`) melden `02`, das grüne
+Delay und das grüne MOD melden `01`. Also LED = aus oder Farbe + 1. `03` = gelb ist daraus
+abgeleitet: UNVERIFIZIERT. Die Variation-LED hat keine Farbe.
 
 ---
 
@@ -513,6 +529,26 @@ Anfrage:
 
 Alle Checksummen korrekt. Der eingefügte Log war nach 11:23:37 abgeschnitten
 (Längenlimit beim Einfügen); weitere Aktionen danach sind nicht ausgewertet.
+
+### 10.3 Mac, zweiter Log und erste Schreibbefehle, 2026-11-01
+
+Zweiter Log (Diagnose-Seite, 12:19–12:21):
+
+| Aktion am Amp | Meldungen |
+| --- | --- |
+| BASS drehen | `00 24` und `06 53` abwechselnd, gleiche Werte |
+| MIDDLE drehen | `00 25` und `06 54`, gleiche Werte |
+| GAIN drehen (Crunch) | `00 22` und `06 51`, `00 22` ≈ 0,8 × `06 51` + 20 |
+| AMP TYPE Crunch → Clean → Acoustic | erst `06 50` (Schalter), dann `00 21` (Modell): Clean → `08`, Acoustic → `01` |
+
+**Antwort auf eine offene Frage:** Am Drehschalter setzt der Amp das Amp-Modell `00 21`
+selbst auf das passende Panel-Modell. Ob das auch beim **Schreiben** von `06 50` passiert,
+liest der Editor nach jedem Schreiben zurück; Ergebnis folgt mit Martins Test.
+
+Erste Schreibbefehle aus dem Editor (unsichtbare Chrome-Instanz, unveränderte Werte, damit
+sich am Klang nichts ändert): `60 00 06 51` (Gain), `60 00 00 21` (Amp-Modell) und
+`60 00 00 11` (Booster-Typ) mit dem jeweils eingestellten Wert geschrieben. Das Rücklesen
+bestätigte alle drei. Der Amp antwortet auf DT1 nicht von sich aus.
 
 ## 11. Offene Punkte
 

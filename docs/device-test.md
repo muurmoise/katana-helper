@@ -104,41 +104,60 @@ Nach jedem Test bitte den **kompletten Log** zurückschicken, mit „Log kopiere
 
 ---
 
-## Teil 3 – Prüfpunkte für später (Phase 2)
+## Teil 3 – Schreibtest mit dem Editor (Phase 2)
 
-Diese Punkte brauchen Schreibbefehle und kommen erst, wenn die Verbindung steht.
+Editor: <https://muurmoise.github.io/katana-helper/>, Google Chrome, Amp per USB.
 
-### Regel: Erst Backup, dann schreiben
+### Regeln
 
-- [ ] Vor jedem Schreibtest den aktuellen Patch mit **„Patch auslesen (Backup)“** lesen.
-      Die `BACKUP`-Zeilen im Log enthalten den vollständigen Patch und gehören zum Log.
-- [ ] Schreibtests nur im **Panel-Modus** oder auf einem Kanal, dessen Klang egal ist.
-- [ ] Niemals „Speichern“ (`7F 00 01 04`) im Test. Der Befehl überschreibt einen Kanal
-      dauerhaft.
+- [ ] Nur einen Tab mit katana-helper offen haben, Diagnose-Seite und BOSS Tone Studio
+      schließen. (Mehrere Tabs funktionieren, machen den Log aber unübersichtlich.)
+- [ ] Zuerst **„Backup speichern“** klicken. Die JSON-Datei enthält den kompletten Klang.
+- [ ] Am besten im **Panel**-Kanal testen. Dort holt man den alten Klang auch zurück, indem
+      man die Regler am Amp kurz bewegt.
+- [ ] Der Editor **speichert nie** in einen Kanal; der Speicherbefehl ist im Code gesperrt.
+      Alles, was du änderst, ist nach einem Kanalwechsel oder Aus- und Einschalten weg.
+- [ ] Unten „Debug“ aufklappen. Nach jeder Änderung steht im Log „Bestätigt: …“ oder
+      „Amp meldet … statt …“. Die Zeilen danach zeigen, was der Amp sonst noch geändert hat.
 
-### Offene Protokollfragen
+### Ablauf
 
-- [x] **Farbwerte:** Geklärt aus dem Patch-Dump und am Gerät bestätigt (Booster- und
-      Reverb-LED rot bei Wert `01`): `00` = Grün, `01` = Rot, `02` = Gelb
-      (`docs/protocol.md` 7.3). Der Schreibtest unten ist optional.
-      Test: `60 00 06 39` (Booster-Farbe) nacheinander auf `00`, `01`, `02` setzen und
-      jedes Mal die LED am Amp ablesen. Danach für MOD/FX/Delay/Reverb (`06 3A`–`06 3D`)
-      stichprobenartig wiederholen.
-- [ ] **Preamp-Adressen `00 2x` vs. Bedienfeld `06 5x`:** Gain `60 00 00 22`, Bass `00 24`,
-      Middle `00 25`, Treble `00 26`, Presence `00 27`, Volume `00 28` setzen und mit
-      `06 51`–`06 56` vergleichen. Ändert sich der Klang? Folgt der Wert in `06 5x`? Was
-      meldet der Amp, wenn man am Regler dreht?
-      Beachten: Gain `00 22` hat laut FxFloorBoard eine andere Skala (`00`–`78`).
-- [ ] **Amp-Typ:** Drehschalter-Adresse `60 00 06 50` (5 Werte) gegen konkretes Modell
-      `60 00 00 21` (30 Werte). Fragen: Ändert `06 50` auch `00 21`? Bleibt beim
-      Setzen von `00 21` = „Var [Clean]“ (`1D`) der Schalter auf Clean und geht die
-      Variation-LED an? Wird `06 5C` (Variation-LED) passend gemeldet?
-- [ ] **Kanalwechsel** `00 01 00 00` mit allen 9 Werten (Panel, A1–A4, B1–B4). Antwortet
-      der Amp mit dem neuen Kanal? Kommt danach ein neuer Patch?
-- [ ] **Delay 2** an/aus und Typ (`60 00 05 20` / `05 21`), dazu die Reverb-Regler-Belegung
-      `60 00 06 36`–`38` (Delay / Delay+Reverb / Reverb).
-- [ ] **Effekt-Regler** `06 57`–`06 5B`: Stimmt die Skala „`00` = aus, `01`–`65` = 0–100“?
+1. [ ] **Gain-Regler** im Editor bewegen. Ändert sich der Klang? Bleibt der Regler am Amp
+       stehen (er ist ja ein echter Drehregler)?
+2. [ ] **Bass, Middle, Treble, Presence, Volume** kurz bewegen.
+3. [ ] **Amp-Typ** im Editor durchschalten (Acoustic … Brown). Ändert sich der Klang?
+       Zeigt „Modell“ danach das passende Panel-Modell? Was zeigt die AMP-TYPE-LED am Amp?
+4. [ ] **Modell** „Variation Clean“ wählen. Erscheint im Editor das Schild „Variation“?
+       Geht am Amp die VARIATION-LED an? Was zeigt der Typ-Schalter im Editor?
+5. [ ] Ein **verstecktes Modell** wählen, z. B. „Clean Twin“ oder „Core Metal“.
+6. [ ] **Effekte an/aus** für alle fünf. Gehen die LEDs am Amp mit?
+7. [ ] **Farbe** eines Effekts wechseln (Grün/Rot/Gelb). Wechselt die LED-Farbe am Amp?
+       Wechselt der Typ im Editor mit (jede Farbe hat ihren eigenen Typ)?
+8. [ ] **Typ** eines Effekts ändern, dann auf eine andere Farbe und zurück wechseln. Ist
+       der neue Typ noch da? (Offene Frage: Schreibt der Amp den Typ in den Farbplatz?)
+9. [ ] **„Änderungen zurücknehmen“**. Klingt es wieder wie vorher?
+10. [ ] **Kanalwechsel**: A1 … B4 und zurück auf Panel. Folgen Kanal-LED und Klang? Liest
+        der Editor danach den neuen Klang?
+11. [ ] Am Amp selbst den Kanal wechseln. Folgt der Editor?
+12. [ ] Debug → **„Als Datei“** und mir die Log-Datei schicken (oder Bescheid geben, dann
+        lese ich sie aus „Downloads“).
+
+### Noch offene Protokollfragen
+
+- [x] **Farbwerte:** `00` = Grün, `01` = Rot, `02` = Gelb (Patch-Dump und LED am Gerät,
+      `docs/protocol.md` 7.3).
 - [x] **Identity Reply:** `F0 7E 00 06 02 41 33 03 00 00 06 00 00 00 F7`, gleich wie in
       TuxKatana. Firmware-Version laut Amp-Menü noch gegenprüfen.
-- [ ] Erst ganz am Ende und nur mit Backup: **Speichern** (`7F 00 01 04`) auf einem
+- [ ] **Amp-Typ beim Schreiben** (Schritt 3–5): Ändert `06 50` auch `00 21`? Geht bei
+      `00 21` = „Variation Clean“ (`1D`) die Variation-LED an? Am Drehschalter setzt der
+      Amp `00 21` selbst (`docs/protocol.md` 10.3).
+- [ ] **Typ je Farbe** (Schritt 8): Wird `00 11` usw. in den Farbplatz `06 24`… übernommen?
+- [ ] **Effekt-LED gelb:** Meldet `06 5D`… den Wert `03`, wenn die Farbe Gelb ist?
+- [ ] **Preamp-Adressen `00 2x` als Schreibziel:** Der Editor nutzt `06 5x`; `00 2x` wird
+      nur gelesen. Schreiben auf `00 2x` bleibt ungetestet.
+- [ ] **Delay 2** an/aus und Typ (`60 00 05 20` / `05 21`), dazu die Reverb-Regler-Belegung
+      `60 00 06 36`–`38` (Delay / Delay+Reverb / Reverb). Noch nicht im Editor.
+- [ ] **Effekt-Regler** `06 57`–`06 5B`: Stimmt die Skala „`00` = aus, `01`–`65` = 0–100“?
+      Noch nicht im Editor.
+- [ ] **Speichern** (`7F 00 01 04`): erst in Phase 3, nur mit Backup und auf einem
       unwichtigen Kanal.

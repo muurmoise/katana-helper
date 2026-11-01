@@ -104,10 +104,23 @@ field(P(0x05, 0x40), 'Reverb an/aus', 1, onOff);
 field(P(0x05, 0x41), 'Reverb-Typ', 1, pick(reverbTypes));
 ['Grün', 'Rot', 'Gelb'].forEach((c, i) => field(P(0x06, 0x36 + i), `Reverb-Regler ${c}`, 1, pick(reverbKnob)));
 ['Booster', 'MOD', 'FX', 'Delay', 'Reverb'].forEach((n, i) => field(P(0x06, 0x39 + i), `Farbe ${n}`, 1, pick(colors)));
+// Type stored per colour slot (green, red, yellow), three bytes per effect from 06 24.
+[
+  ['Booster', boosterTypes],
+  ['MOD', modTypes],
+  ['FX', modTypes],
+  ['Delay', delayTypes],
+  ['Reverb', reverbTypes],
+].forEach(([n, table], i) =>
+  colors.forEach((c, j) => field(P(0x06, 0x24 + i * 3 + j), `${n}-Typ ${c}`, 1, pick(table))),
+);
 field(P(0x06, 0x50), 'AMP-TYPE-Schalter', 1, pick(ampKnob));
 ['Gain', 'Volume', 'Bass', 'Middle', 'Treble', 'Presence'].forEach((n, i) => field(P(0x06, 0x51 + i), n, 1, number));
 ['Booster', 'MOD', 'FX', 'Delay', 'Reverb'].forEach((n, i) => field(P(0x06, 0x57 + i), `${n}-Regler`, 1, effectKnob));
-['Variation', 'Booster', 'MOD', 'FX', 'Delay', 'Reverb'].forEach((n, i) => field(P(0x06, 0x5c + i), `LED ${n}`, 1, onOff));
+field(P(0x06, 0x5c), 'LED Variation', 1, onOff);
+// Effect LEDs report the colour too: 00 off, 01 green, 02 red (seen on our amp), 03 yellow (assumed).
+const led = (d) => ['aus', 'grün', 'rot', 'gelb'][d[0]] ?? `? (${hex(d)})`;
+['Booster', 'MOD', 'FX', 'Delay', 'Reverb'].forEach((n, i) => field(P(0x06, 0x5d + i), `LED ${n}`, 1, led));
 
 export function fieldAt(address) {
   return FIELDS.get(hex(address)) ?? null;

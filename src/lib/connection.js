@@ -42,6 +42,7 @@ export class Connection {
     this.state = isWebMidiSupported(nav) ? 'idle' : 'unsupported';
     this.info = emptyInfo();
     this.listeners = new Set();
+    this.dataListeners = new Set();
     this.reconnectTimer = null;
     this.portsHooked = false;
     this.offs = [];
@@ -51,6 +52,12 @@ export class Connection {
   onChange(listener) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  /** Every valid DT1 from the amp, with `solicited` = reply to our request. */
+  onData(listener) {
+    this.dataListeners.add(listener);
+    return () => this.dataListeners.delete(listener);
   }
 
   set(state, patch = {}) {
@@ -158,7 +165,10 @@ export class Connection {
     this.offs = [
       client.on('send', ({ bytes, label }) => this.log('out', label, { raw: hex(bytes) })),
       client.on('message', ({ msg, solicited }) => this.logIncoming(msg, solicited)),
-      client.on('dt1', (msg) => this.track(msg)),
+      client.on('dt1', (msg) => {
+        this.track(msg);
+        for (const l of this.dataListeners) l(msg);
+      }),
     ];
   }
 
@@ -190,7 +200,12 @@ export class Connection {
     if (msg.solicited || this.state !== 'connected') return;
     const at = (a) => hex(msg.address) === hex(a);
     if (at(ADDR.ACTIVE_CHANNEL)) {
-      this.set('connected', { channel: channelFromData(msg.data) });
+      // Only a real change counts. Other MIDI clients (a second tab, the probe page) read the
+      // channel too, and we see their replies; reacting to those would make both re-read
+      // forever.
+      const channel = channelFromData(msg.data);
+      if (channel === this.info.channel) return;
+      this.set('connected', { channel });
       // A channel change loads another patch; read its name once the amp has settled.
       setTimeout(() => this.refresh(), 300);
     } else if (at(ADDR.PATCH_NAME) && msg.data.length >= 16) {

@@ -5,6 +5,7 @@ import {
   ADDR,
   IDENTITY_REQUEST,
   ROLAND_ID,
+  buildDT1,
   buildEditMode,
   buildRQ1,
   fromBase128,
@@ -14,6 +15,7 @@ import {
 import { asciiName, channelFromData } from './describe.js';
 
 export const KATANA_FAMILY = [0x33, 0x03];
+export const SAVE_COMMAND = [0x7f, 0x00, 0x01, 0x04];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -117,6 +119,21 @@ export class KatanaClient {
       this.editMode = on;
       this.emit('edit-mode', on);
       if (this.editModeDelayMs > 0) await sleep(this.editModeDelayMs);
+    });
+  }
+
+  /**
+   * DT1: write bytes to the temporary patch or a system address. The amp does not answer.
+   * Writing to the save command (7F 00 01 04) is refused: it overwrites a channel for good,
+   * and katana-helper never saves without a separate, explicit feature (phase 3).
+   */
+  write(address, data, label = `DT1 ${hex(address)}`) {
+    if (hex(address) === hex(SAVE_COMMAND)) {
+      return Promise.reject(new Error('Speichern ist gesperrt'));
+    }
+    const message = buildDT1(address, data);
+    return this.enqueue(async () => {
+      this.send(message, label);
     });
   }
 
