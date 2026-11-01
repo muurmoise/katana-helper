@@ -25,6 +25,38 @@ oder von ihm empfängt. Stand: 2026-11-01.
 | **Q4** | fpereira3, *ktnacontrol* (Android-App) – <https://github.com/fpereira3/ktnacontrol> | Commit `5d5dd73`, 2026-09-10 | MkII. `app/src/main/java/dev/alonx3/ktnacontrol/protocol/KatanaAddresses.kt` und `BACKLOG.md` dokumentieren Hardwaretests pro Adresse. |
 | **Q5** | BOSS/Roland Support – <https://www.boss.info/au/support/by_product/katana-50_mk2/updates_drivers/925b13ac-a4af-4069-b09c-836b956375e7/> | – | Treiberpflicht unter macOS/Windows. |
 
+### Lizenzen der Quellen – was wir übernehmen dürfen
+
+Stand der Prüfung: 2026-11-01.
+
+| Quelle | Lizenz | Code übernehmen? | Erkenntnisse nutzen? |
+| --- | --- | --- | --- |
+| Q1 snhirsch/katana-midi-bridge | GPL-2.0 (Repo-`LICENSE`) | Nein. Unser Projekt würde sonst GPL. | Ja, mit Quellenangabe |
+| Q2 FxFloorBoard (Katana MK2) | GPL-2.0-or-later (Datei-Header, z. B. `SysxIO.cpp`), beigelegte `license.txt` = GPL-3.0 | Nein, auch `midi.xml` nicht kopieren | Ja, mit Quellenangabe |
+| Q3 TuxKatana | AGPL-3.0 (`LICENSE`) | Nein. AGPL würde auch für die gehostete Web-App gelten. | Ja, mit Quellenangabe |
+| Q4 ktnacontrol | **Keine Lizenz** (GitHub meldet `license: null`, keine Lizenzdatei, keine Lizenz-Header) → alle Rechte beim Autor | **Nein**, auch nicht in Auszügen | Ja, mit Quellenangabe |
+
+**Regel für katana-helper:**
+
+- Wir schreiben allen Code selbst. Aus keiner der Quellen wird Code kopiert, übersetzt oder
+  zeilenweise nachgebaut.
+- Übernommen werden nur **Fakten über das Gerät**: Adressen, Wertebereiche, Nachrichtenformat,
+  Verhalten, Testergebnisse. Die Tabellen in diesem Dokument sind unsere eigene
+  Zusammenstellung.
+- Das USB-MIDI-Paketformat (4 Byte, Code Index Number) setzen wir nach der öffentlichen
+  Spezifikation *USB Device Class Definition for MIDI Devices 1.0* (usb.org, Kap. 4) um,
+  nicht nach dem Code von Q4.
+- Die Quellenangabe steht in [`CREDITS.md`](../CREDITS.md) und in dieser Datei (Spalte
+  „Quelle“). Das ist nicht rechtlich vorgeschrieben, aber fair und hält die Herkunft
+  nachvollziehbar.
+- Wird später doch einmal Code aus einer GPL/AGPL-Quelle gebraucht, müsste katana-helper
+  unter eine kompatible Lizenz gestellt werden. Das wäre eine bewusste Entscheidung, keine
+  Nebenwirkung.
+
+(Keine Rechtsberatung, sondern die übliche Lesart dieser Lizenzen.)
+
+### MkI- vs. MkII-Adressen
+
 Der in der Aufgabenstellung genannte snhirsch-Text (Q1) beschreibt den **MkI**. Q4 hat
 nachgemessen, dass MkI-Patch-Adressen am MkII ins Leere gehen (z. B. `60 00 06 18` ist
 dort kein Reverb-Level, sondern ein FS2-Parameter). Für Patch-Parameter nutzen wir daher
