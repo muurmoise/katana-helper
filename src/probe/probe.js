@@ -3,7 +3,6 @@
 
 import {
   ADDR,
-  ascii,
   buildEditMode,
   buildRQ1,
   fromBase128,
@@ -14,6 +13,7 @@ import {
   sameAddress,
 } from '../lib/sysex.js';
 import { packSysex, UsbMidiReceiver } from '../lib/usbmidi.js';
+import { describe } from '../lib/describe.js';
 
 const ROLAND_VENDOR_ID = 0x0582;
 const $ = (id) => document.getElementById(id);
@@ -124,43 +124,6 @@ function setStatus(id, text, bad = false) {
 
 // ---------------------------------------------------------------- incoming messages
 
-const KNOWN = [
-  { addr: ADDR.PANEL_NAME, name: 'Name 10 00 00 00 (Panel-Speicher?)', show: (d) => `"${ascii(d).trimEnd()}"` },
-  { addr: ADDR.ACTIVE_CHANNEL, name: 'Aktiver Kanal', show: showChannel },
-  { addr: ADDR.PATCH_NAME, name: 'Patch-Anfang (Name)', show: (d) => `"${ascii(d.slice(0, 16)).trimEnd()}"` },
-  { addr: ADDR.AMP_TYPE_KNOB, name: 'AMP-TYPE-Schalter', show: (d) => ['Acoustic', 'Clean', 'Crunch', 'Lead', 'Brown'][d[0]] ?? d[0] },
-  { addr: ADDR.GAIN, name: 'Gain', show: (d) => `${d[0]} (0–100)` },
-  { addr: ADDR.EDIT_MODE, name: 'Edit-Mode', show: (d) => (d[0] ? 'an' : 'aus') },
-  ...panel(0x52, 'Volume'), ...panel(0x53, 'Bass'), ...panel(0x54, 'Middle'),
-  ...panel(0x55, 'Treble'), ...panel(0x56, 'Presence'),
-  ...panel(0x57, 'Booster-Regler'), ...panel(0x58, 'MOD-Regler'), ...panel(0x59, 'FX-Regler'),
-  ...panel(0x5a, 'Delay-Regler'), ...panel(0x5b, 'Reverb-Regler'),
-  ...led(0x5c, 'Variation'), ...led(0x5d, 'Booster'), ...led(0x5e, 'MOD'), ...led(0x5f, 'FX'),
-  ...led(0x60, 'Delay'), ...led(0x61, 'Reverb'),
-  ...onOff([0x00, 0x10], 'Booster'), ...onOff([0x01, 0x00], 'MOD'), ...onOff([0x03, 0x00], 'FX'),
-  ...onOff([0x05, 0x00], 'Delay'), ...onOff([0x05, 0x40], 'Reverb'),
-  { addr: [0x60, 0x00, 0x00, 0x22], name: 'Preamp-Gain', show: (d) => `${d[0]}` },
-  { addr: [0x60, 0x00, 0x05, 0x02], name: 'Delay-Zeit', show: (d) => (d.length === 2 ? `${d[0] * 128 + d[1]} ms` : hex(d)) },
-];
-
-function panel(lo, name) {
-  return [{ addr: [0x60, 0x00, 0x06, lo], name, show: (d) => `${d[0]}` }];
-}
-
-function led(lo, name) {
-  return [{ addr: [0x60, 0x00, 0x06, lo], name: `LED ${name}`, show: (d) => (d[0] ? 'an' : 'aus') }];
-}
-
-function onOff([hi, lo], name) {
-  return [{ addr: [0x60, 0x00, hi, lo], name: `${name} an/aus`, show: (d) => (d[0] ? 'an' : 'aus') }];
-}
-
-function showChannel(d) {
-  const v = d.length >= 2 ? d[1] : d[0];
-  const names = ['Panel', 'A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4'];
-  return `${names[v] ?? '?'} (Wert ${hex(d)})`;
-}
-
 let waiters = [];
 
 /** Resolves with the first parsed message matching `match`, or null after `ms`. */
@@ -187,8 +150,7 @@ function handleIncoming(source, bytes, incomplete = false) {
     log('in', `${source} Identity Reply: ${hex(bytes)}`);
     log('ok', `  Hersteller ${hex([msg.manufacturer])}, Familie ${hex(msg.family)}, Modell ${hex(msg.member)}, Version ${hex(msg.version)}`);
   } else if (msg.kind === 'dt1') {
-    const known = KNOWN.find((k) => sameAddress(k.addr, msg.address));
-    const label = known ? `${known.name} = ${known.show(msg.data)}` : `${msg.data.length} Datenbytes`;
+    const label = describe(msg.address, msg.data);
     if (msg.checksumOk && msg.data.length <= 16) {
       // Short messages (knob turns, switches) on one line to keep the log small.
       log('in', `${source} DT1 ${hex(msg.address)} [${hex(msg.data)}] ${label} ✓`);

@@ -9,8 +9,9 @@ Schlichter Editor für den **BOSS Katana-100 MkII** im Browser.
 
 ## Status
 
-USB-Test (Phase 1a) abgeschlossen, als Nächstes kommt Phase 1 (Verbindung + Debug). Die
-Testseite bleibt als Diagnose unter <https://muurmoise.github.io/katana-helper/probe/>.
+Phase 1 (Verbindung + Debug-Log) ist fertig: <https://muurmoise.github.io/katana-helper/>.
+Als Nächstes kommt Phase 2 (Regler live). Die Diagnose-Seite liegt unter
+<https://muurmoise.github.io/katana-helper/probe/>.
 
 Roadmap: [CLAUDE.md](CLAUDE.md) · MIDI-Protokoll: [docs/protocol.md](docs/protocol.md) ·
 Quellen: [CREDITS.md](CREDITS.md)

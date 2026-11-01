@@ -4,13 +4,74 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>katana-helper</title>
+    <link rel="stylesheet" href="/src/app/app.css" />
   </head>
   <body>
-    <main>
+    <header class="topbar">
       <h1>katana-helper</h1>
-      <p>Web-Editor für den BOSS Katana-100 MkII – in Arbeit.</p>
-      <p><a href="probe/">USB-Test (probe)</a></p>
+      <span id="status" class="pill" data-state="idle">Nicht verbunden</span>
+      <span class="spacer"></span>
+      <button id="connect">Verbinden</button>
+      <button id="disconnect" class="secondary" hidden>Trennen</button>
+    </header>
+
+    <main class="layout">
+      <section class="card" aria-labelledby="dev-title">
+        <h2 id="dev-title">Gerät</h2>
+        <p id="hint" class="hint"></p>
+
+        <dl class="facts">
+          <dt>Gerät</dt>
+          <dd id="f-device">–</dd>
+          <dt>Version</dt>
+          <dd id="f-version">–</dd>
+          <dt>Kanal</dt>
+          <dd id="f-channel">–</dd>
+          <dt>Aktueller Klang</dt>
+          <dd id="f-patch">–</dd>
+          <dt>Panel-Speicher</dt>
+          <dd id="f-panel">–</dd>
+          <dt>Edit-Mode</dt>
+          <dd id="f-edit">–</dd>
+          <dt>MIDI-Ports</dt>
+          <dd id="f-ports">–</dd>
+        </dl>
+
+        <div class="row">
+          <button id="refresh" class="secondary" disabled>Neu lesen</button>
+        </div>
+
+        <details id="manual">
+          <summary>Ports von Hand wählen</summary>
+          <div class="ports">
+            <label>Eingang <select id="in-port"></select></label>
+            <label>Ausgang <select id="out-port"></select></label>
+          </div>
+          <button id="manual-connect" class="secondary">Mit diesen Ports verbinden</button>
+        </details>
+      </section>
+
+      <section class="card log-card" aria-labelledby="log-title">
+        <div class="log-head">
+          <h2 id="log-title">Debug-Log</h2>
+          <div class="log-tools">
+            <label class="check"><input type="checkbox" id="opt-raw" /> Hex</label>
+            <label class="check"><input type="checkbox" id="opt-amp" checked /> Amp-Meldungen</label>
+            <label class="check"><input type="checkbox" id="opt-follow" checked /> Mitlaufen</label>
+            <button id="log-copy" class="small secondary">Kopieren</button>
+            <button id="log-save" class="small secondary">Als Datei</button>
+            <button id="log-clear" class="small secondary">Leeren</button>
+          </div>
+        </div>
+        <div id="log" class="log" role="log" aria-live="off"></div>
+      </section>
     </main>
+
+    <footer class="foot">
+      Nur Google Chrome am Mac mit BOSS-KATANA-Treiber.
+      <a href="probe/">Diagnose-Seite (USB-Test)</a>
+    </footer>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

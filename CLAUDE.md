@@ -34,11 +34,28 @@ BOSS-Treiber macht daraus MIDI-Ports. Details: `docs/protocol.md` Abschnitt 1.
   den WebUSB-Teil der Testseite.
 - Ergebnisse: `docs/protocol.md` Abschnitt 10.
 
-### Phase 1 – Verbindung + Debug
+### Phase 1 – Verbindung + Debug ✓ erledigt (2026-11-01)
 
-Web MIDI öffnen (`sysex: true`), Port „KATANA“ automatisch wählen (nicht „DAW CTRL“), Gerät per
-Identity Request erkennen, Edit-Mode, Debug-Log, Hinweis bei fehlendem Web MIDI. Baut auf
-`sysex.js` auf. Ein Transport-Modul kapselt Web MIDI, damit der Rest testbar bleibt.
+Am echten Amp getestet (Chrome 156, macOS 27): automatisch verbinden, erkennen, Edit-Mode,
+Kanal und Namen lesen, trennen, erneut verbinden.
+
+Aufbau (alles unter `src/lib/` ohne DOM und mit Vitest-Tests):
+
+| Datei | Aufgabe |
+| --- | --- |
+| `sysex.js` | Roland-SysEx bauen und parsen, Checksumme |
+| `describe.js` | Deutsche Namen für Adressen und Werte (Tabellen aus `docs/protocol.md` 9) |
+| `midi-transport.js` | Web MIDI: Zugriff mit SysEx, Port „KATANA“ wählen, Port-Ereignisse |
+| `katana.js` | `KatanaClient`: Anfragen nacheinander, Antworten per Adressbereich zuordnen, Timeouts, Meldungen vom Amp |
+| `connection.js` | Ablauf und Zustände (verbunden, nicht gefunden, verloren …), Auto-Reconnect, Log |
+| `log.js` | Debug-Log mit Ringpuffer |
+
+Die Oberfläche steckt in `src/main.js` und `src/app/app.css`, die Seite in `index.html`.
+Verhalten:
+- Verbindet beim Laden selbst, wenn Chrome MIDI schon erlaubt hat. Sonst erst nach Klick, damit
+  die Berechtigungsfrage nicht ungefragt kommt.
+- Verbindet von selbst neu, wenn der Amp wieder auftaucht.
+- Schaltet den Edit-Mode beim Trennen und beim Schließen des Tabs (`pagehide`) aus.
 
 ### Phase 2 – Regler live
 
