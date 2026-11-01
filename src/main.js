@@ -2,9 +2,12 @@
 
 import { mountEditor } from './app/editor-ui.js';
 import { mountLog } from './app/log-ui.js';
+import { mountPatches } from './app/patches-ui.js';
 import { Connection } from './lib/connection.js';
 import { CHANNEL_NAMES } from './lib/describe.js';
 import { Editor } from './lib/editor.js';
+import { PatchLibrary, indexedDbBackend, memoryBackend } from './lib/library.js';
+import { PatchManager } from './lib/manager.js';
 import { Logger } from './lib/log.js';
 import { WebMidiTransport, midiPermission } from './lib/midi-transport.js';
 import { hex } from './lib/sysex.js';
@@ -14,6 +17,21 @@ const $ = (id) => document.getElementById(id);
 const logger = new Logger();
 const connection = new Connection({ transport: new WebMidiTransport(), logger });
 const editor = new Editor(connection);
+
+// IndexedDB keeps the library across reloads. Without it (blocked storage) the library
+// still works, but only until the page is reloaded.
+async function openLibrary() {
+  try {
+    const backend = indexedDbBackend();
+    await backend.all();
+    return new PatchLibrary(backend);
+  } catch (e) {
+    logger.add('warn', `Browser-Speicher nicht verfügbar (${e?.message ?? e}). Bibliothek nur bis zum Neuladen.`);
+    return new PatchLibrary(memoryBackend());
+  }
+}
+const library = await openLibrary();
+const manager = new PatchManager({ connection, editor, library });
 
 // ------------------------------------------------------------------ status
 
@@ -112,6 +130,7 @@ window.addEventListener('pagehide', () => connection.pageHide());
 
 mountLog(logger);
 mountEditor(editor, connection);
+mountPatches({ manager, library, editor, connection });
 logger.add('info', `Browser: ${navigator.userAgent}`);
 render();
 

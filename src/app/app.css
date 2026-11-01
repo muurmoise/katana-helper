@@ -620,3 +620,251 @@ details summary {
 .log .out {
   color: var(--out);
 }
+
+/* ---------------------------------------------------------------- patches */
+
+h3 {
+  font-size: 0.95rem;
+  margin: 0 0 10px;
+}
+
+.note-inline {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--warn);
+}
+
+.patches-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.patches-head h2 {
+  margin: 0 0 8px;
+}
+
+.patches-status {
+  font-size: 13px;
+  color: var(--ok);
+}
+
+.patches-status.bad {
+  color: var(--err);
+}
+
+.patches-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .patches-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.channel-list,
+.library-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.channel-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.channel-row.current {
+  background: var(--field);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.ch-label {
+  font-weight: 700;
+}
+
+.ch-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.file-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.file-button:has(input:focus-visible) {
+  outline: 2px solid var(--in);
+  outline-offset: 2px;
+}
+
+.file-button input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.library-list {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.lib-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--field);
+}
+
+.lib-row.backup {
+  background: transparent;
+  border: 1px dashed var(--line);
+}
+
+.lib-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.lib-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lib-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.lib-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.library-list .empty {
+  color: var(--muted);
+  padding: 8px 0;
+}
+
+.menu {
+  position: relative;
+}
+
+.menu > summary {
+  list-style: none;
+  min-width: 30px;
+  min-height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--fg);
+}
+
+.menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu-box {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  display: grid;
+  gap: 4px;
+  min-width: 170px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+}
+
+.menu-box button {
+  text-align: left;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------- dialog */
+
+.dialog {
+  width: min(460px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--fg);
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+.dialog h2 {
+  font-size: 1.05rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--fg);
+}
+
+.dialog-text {
+  margin: 0 0 14px;
+}
+
+.dialog input[type='text'] {
+  font: inherit;
+  min-height: 34px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--field);
+  color: var(--fg);
+}
+
+.dialog-warning {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--warn);
+  color: var(--warn);
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

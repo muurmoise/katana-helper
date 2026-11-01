@@ -138,6 +138,21 @@ export class KatanaClient {
   }
 
   /**
+   * Store the temporary patch in channel n (1–8 = A1–B4) for good: DT1 7F 00 01 04 00 0n
+   * (FxFloorBoard patchWriteDialog.cpp). Panel (0) is refused. Only PatchManager calls this,
+   * after it has backed up the channel.
+   */
+  saveToChannel(n) {
+    if (!Number.isInteger(n) || n < 1 || n > 8) {
+      return Promise.reject(new RangeError(`In Kanal ${n} wird nicht gespeichert (nur A1–B4)`));
+    }
+    const message = buildDT1(SAVE_COMMAND, [0x00, n]);
+    return this.enqueue(async () => {
+      this.send(message, `SPEICHERN in Kanal ${n}`);
+    });
+  }
+
+  /**
    * Send edit mode off without waiting in the queue. For page unload, where async work
    * does not finish.
    */

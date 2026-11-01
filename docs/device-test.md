@@ -159,5 +159,38 @@ Editor: <https://muurmoise.github.io/katana-helper/>, Google Chrome, Amp per USB
       `60 00 06 36`–`38` (Delay / Delay+Reverb / Reverb). Noch nicht im Editor.
 - [ ] **Effekt-Regler** `06 57`–`06 5B`: Stimmt die Skala „`00` = aus, `01`–`65` = 0–100“?
       Noch nicht im Editor.
-- [ ] **Speichern** (`7F 00 01 04`): erst in Phase 3, nur mit Backup und auf einem
-      unwichtigen Kanal.
+- [ ] **Speichern** (`7F 00 01 04`): siehe Teil 4.
+
+---
+
+## Teil 4 – Patches und Speichern (Phase 3)
+
+Bereich „Patches“ unten im Editor. Lesen, Sichern und Laden sind am Amp getestet
+(`docs/protocol.md` 10.4). Offen ist nur das **Speichern in einen Kanal**.
+
+### Vorbereitung
+
+- [ ] Alle Kanäle sichern: In „Kanäle im Amp“ bei A1 … B4 jeweils **„Sichern“** klicken.
+      Danach **„Alle exportieren“**. Die JSON-Datei ist das Komplett-Backup außerhalb des
+      Browsers.
+- [ ] Einen Kanal aussuchen, dessen Klang verzichtbar ist (für den Test z. B. B3 „banjo“).
+
+### Speichertest
+
+1. [ ] Im Editor einen Klang einstellen, der sich deutlich vom Zielkanal unterscheidet.
+2. [ ] Beim Zielkanal **„Speichern …“**, Namen eingeben (z. B. „Test“), bestätigen.
+3. [ ] In der Statuszeile steht „gespeichert und geprüft“? In der Bibliothek liegt ein
+       **Auto-Backup** des alten Kanals?
+4. [ ] Zeigt „Kanäle im Amp“ den neuen Namen?
+5. [ ] Am Amp auf den Zielkanal schalten: Klingt er wie gespeichert? Dann auf einen
+       anderen Kanal und zurück: Ist der Klang noch da?
+6. [ ] **Zurück zum alten Stand:** Beim Auto-Backup **„In Kanal …“** → denselben Kanal
+       wählen → speichern. Klingt der Kanal wieder wie vorher?
+7. [ ] Amp aus- und einschalten, Kanal prüfen.
+8. [ ] Debug → „Als Datei“ und Bescheid geben.
+
+### Import/Export
+
+- [ ] Einen Patch über ⋯ → **„Exportieren“** sichern, ihn löschen, dann über
+      **„Importieren“** wieder einlesen und **„Laden“**.
+- [ ] Die Datei aus „Backup speichern“ (oben im Editor) lässt sich ebenfalls importieren.

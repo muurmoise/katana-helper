@@ -10,9 +10,11 @@ Schlichter Editor für den **BOSS Katana-100 MkII** im Browser.
 ## Status
 
 Editor: <https://muurmoise.github.io/katana-helper/>. Phase 2 (Regler live) ist umgesetzt:
-Kanal, Amp-Typ und Modell, Gain/EQ/Volume, fünf Effekte mit an/aus, Farbe und Typ. Der
-Editor ändert nur den aktuellen Klang und speichert nie in einen Kanal. Die Diagnose-Seite
-liegt unter <https://muurmoise.github.io/katana-helper/probe/>.
+Kanal, Amp-Typ und Modell, Gain/EQ/Volume, fünf Effekte mit an/aus, Farbe und Typ.
+Phase 3 (Patches) ist umgesetzt: Bibliothek im Browser, JSON-Export und -Import, Kanäle
+sichern und Patches in einen Kanal speichern. Vor jedem Speichern sichert der Editor den
+Zielkanal automatisch. Die Diagnose-Seite liegt unter
+<https://muurmoise.github.io/katana-helper/probe/>.
 
 Roadmap: [CLAUDE.md](CLAUDE.md) · MIDI-Protokoll: [docs/protocol.md](docs/protocol.md) ·
 Quellen: [CREDITS.md](CREDITS.md)

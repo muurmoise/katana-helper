@@ -95,7 +95,7 @@ describe('KatanaClient', () => {
   });
 
   it('collects a patch dump with a gap like the real amp', async () => {
-    // The amp answered with 60 00 00 00–07 43 and 60 00 08 00–0E 7F (docs/protocol.md 2.3).
+    // The amp answered with 60 00 00 00–07 43 and 60 00 08 00–0F 47 (docs/protocol.md 2.3).
     const p = client.read(ADDR.PATCH, PATCH_DUMP_SIZE, 'Patch');
     await flush();
     const send = (offset, length) =>
@@ -107,11 +107,12 @@ describe('KatanaClient', () => {
     send(1024, 241);
     send(1265, 241);
     send(1506, 241);
-    send(1747, 173);
+    send(1747, 241);
+    send(1988, 4);
     const r = await p;
     expect(r.complete).toBe(true);
-    expect(r.received).toBe(1860);
-    expect(r.chunks).toHaveLength(8);
+    expect(r.received).toBe(1932);
+    expect(r.chunks).toHaveLength(9);
     expect(r.byteAt([0x60, 0x00, 0x08, 0x00])).toBe(1024 % 128);
     expect(r.byteAt([0x60, 0x00, 0x07, 0x50])).toBeUndefined();
   });

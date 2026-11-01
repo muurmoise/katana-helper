@@ -218,7 +218,7 @@ async function readPatch(send, label) {
   await sleep(150);
   collector = [];
   const rq = buildRQ1(ADDR.PATCH, PATCH_DUMP_SIZE);
-  log('out', `RQ1 Patch 60 00 00 00, 1920 B: ${hex(rq)}`);
+  log('out', `RQ1 Patch 60 00 00 00, ${PATCH_DUMP_SIZE} B: ${hex(rq)}`);
   await send(rq);
   // Replies come as several DT1 messages; wait until 1 s passes without a new one.
   let count = -1;

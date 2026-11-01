@@ -149,6 +149,12 @@ F0 41 00 00 00 00 33 11  a1 a2 a3 a4  s1 s2 s3 s4  sum F7
   `60 00 08 00`–`60 00 0E 7F` (896 Byte, 4 Nachrichten). Den Bereich `07 44`–`07 7F`
   gibt es nicht, er wird übersprungen. Antwortzeit pro Nachricht etwa 35 ms.
   Status: GETESTET (eigen).
+- **Korrektur (2026-11-01): Ein ganzer Patch ist 1932 Byte groß.** Die Größe 1920
+  (`00 00 0F 00`, aus Q3) schneidet ab. FxFloorBoard fragt `00 00 0F 48` = 1992 an
+  (Q2 `globalVariables.h:65`, `patchRequestDataSize`). Damit antwortet der Amp mit
+  9 Nachrichten: wie oben, dazu `60 00 0D 53` mit vollen 241 Byte und `60 00 0F 44` mit
+  4 Byte, zusammen 1932 Byte (`00 00`–`07 43` und `08 00`–`0F 47`). katana-helper fragt
+  seitdem 1992 an. Status: GETESTET (eigen).
 - Laut Q1 und Q4 sollte vor RQ1 der Edit-Mode aktiv sein (Abschnitt 3).
 - **Mehrere MIDI-Programme gleichzeitig** (zwei Browser-Tabs, App und Diagnose-Seite):
   Die Antworten des Amps tragen keinen Empfänger. Unter macOS sieht jedes Programm am Port
@@ -212,6 +218,7 @@ Auffällig: Q2 sendet für „aktuellen Kanal abfragen“ die Checksumme `FD`
 | `00 02 00 00` | MIDI-Empfangskanal (`00`–`0F`) | Q1 Z. 116–117 |
 | `10 00 00 00` | Laut Q3 Gerätename (16 Byte), bei uns Name des Panel-Patches (siehe 2.2) | Q3, eigener Test |
 | `10 01 00 00` … `10 08 00 00` | Namen der Kanäle A1…B4 (je 16 Byte) | Q3, Q4 |
+| `10 0n 00 00`, Größe `00 00 0F 48` | **Ganzer gespeicherter Kanal** n (0 = Panel, 1–8 = A1–B4), gleicher Aufbau wie `60 00 …`, 1932 Byte. Lesen geht ohne Kanalwechsel. | Q2 `MidiTable.cpp:696–740` (`patchRequest`: `10 + n`), eigener Test: GETESTET (eigen) für alle 9 |
 | `60 00 00 00` … `60 00 0F xx` | **Temporärer Patch** = aktueller Klang. Alle Klangparameter unten liegen hier. | Q2 `<Structure>`, Q3, Q4 |
 | `7F 00 00 01` | Edit-Mode | Q1, Q2 |
 | `7F 00 01 04` | Aktuellen Klang in Kanal speichern | Q2 `patchWriteDialog.cpp:346` |
@@ -255,10 +262,20 @@ Der Katana-100 MkII hat **Panel** plus **Bank A und Bank B mit je CH1–CH4**
   Status: UNVERIFIZIERT – wir verwenden SysEx.
 
 **Speichern** des aktuellen Klangs in einen Kanal (überschreibt ihn, nicht umkehrbar):
-erst den Namen nach `60 00 00 00` (16 Byte ASCII) schreiben, dann
-`F0 41 00 00 00 00 33 12 7F 00 01 04 00 xx sum F7` mit `xx` = `01`…`08`
-(Q2 `patchWriteDialog.cpp:336–350`, Q1 Z. 137–157). Status: UNVERIFIZIERT
-(Q4 hat es eingebaut, aber noch nicht bestätigt).
+`F0 41 00 00 00 00 33 12 7F 00 01 04 00 xx sum F7` mit `xx` = `01`…`08` (A1–B4).
+Der Befehl speichert den temporären Patch `60 00 …` so, wie er gerade ist, einschließlich
+Name (`60 00 00 00`, 16 Byte ASCII). Wer umbenennen will, schreibt vorher den Namen.
+Q2 (`patchWriteDialog.cpp:320–350`) sendet nur diesen einen Befehl; `xx` = `00` wäre dort
+Panel. Q1 Z. 137–157. Status: UNVERIFIZIERT (Q4 hat es eingebaut, aber noch nicht
+bestätigt).
+
+So nutzt katana-helper den Befehl (Phase 3, `src/lib/manager.js`):
+1. Zielkanal über `10 0n 00 00` komplett lesen und als Auto-Backup in der Bibliothek
+   ablegen. Schlägt das fehl, wird nicht gespeichert.
+2. Falls ein neuer Name gewünscht ist: Name nach `60 00 00 00` schreiben.
+3. Speicherbefehl senden, nur für A1–B4. Panel (`00`) ist gesperrt.
+4. Nach 600 ms `10 0n 00 00` zurücklesen und mit dem temporären Patch vergleichen (ohne
+   die LED-Bytes `06 5C`–`06 61`).
 
 ---
 
@@ -549,6 +566,20 @@ Erste Schreibbefehle aus dem Editor (unsichtbare Chrome-Instanz, unveränderte W
 sich am Klang nichts ändert): `60 00 06 51` (Gain), `60 00 00 21` (Amp-Modell) und
 `60 00 00 11` (Booster-Typ) mit dem jeweils eingestellten Wert geschrieben. Das Rücklesen
 bestätigte alle drei. Der Amp antwortet auf DT1 nicht von sich aus.
+
+### 10.4 Phase 3: gespeicherte Kanäle und ganze Patches, 2026-11-01
+
+Unsichtbare Chrome-Instanz, Mac, Amp im Panel-Kanal:
+
+- `RQ1 10 0n 00 00` mit Größe 1992 für n = 0…8: jeweils 9 Nachrichten, 1932 Byte, Name am
+  Anfang. Martins Kanäle: Panel „muur zusamstra?e“, A1 „MUUR Main“, A2 „MUUR Main FXLoop“,
+  A3 „Mono“, A4 „Blackout“, B1 „Lifer“, B2 „ethereal“, B3 „banjo“, B4 „Princeton“.
+- Temporärer Patch gegen gespeicherten Panel-Patch (`10 00 …`): nur 1 Byte verschieden,
+  `06 5E` (MOD-LED, Live-Zustand).
+- **Ganzen Patch schreiben:** Den eben gelesenen Klang (unverändert) als 10 DT1-Nachrichten
+  zurückgeschrieben: höchstens 241 Byte je Nachricht, 20 ms Pause, LED-Bytes ausgelassen.
+  Danach den ganzen Patch zurückgelesen: keine Abweichung. Status: GETESTET (eigen).
+- Speichern in einen Kanal wurde nicht getestet (`docs/device-test.md` Teil 4).
 
 ## 11. Offene Punkte
 

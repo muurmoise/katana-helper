@@ -41,7 +41,7 @@ describe('Editor', () => {
     const { editor } = await setup();
     expect(editor.state.get(GAIN)).toBe(0x21);
     expect(editor.state.get(AMP.model)).toBe(0x08);
-    expect(editor.backup.chunks).toHaveLength(8);
+    expect(editor.backup.chunks).toHaveLength(9);
     expect(editor.backup.patchName).toBe('muur zusamstra?e');
     expect(editor.dirty).toBe(false);
   });
@@ -68,7 +68,7 @@ describe('Editor', () => {
     const { amp, editor, logged } = await setup();
     editor.set(GAIN, 0x30);
     await until(() => amp.byte(GAIN) === 0x30);
-    amp.memory.set(fromBase128(GAIN), 0x31); // amp changed it again before the read-back
+    amp.setByte(GAIN, 0x31); // amp changed it again before the read-back
     await until(() => logged('Amp meldet Gain = 49'));
     expect(editor.state.get(GAIN)).toBe(0x31);
   });
@@ -118,7 +118,7 @@ describe('Editor', () => {
 
   it('reloads when the channel is changed on the amp', async () => {
     const { amp, editor } = await setup();
-    amp.memory.set(fromBase128(GAIN), 0x11); // the other channel's patch
+    amp.setByte(GAIN, 0x11); // the other channel's patch
     amp.amp(ADDR.ACTIVE_CHANNEL, [0, 5]);
     await until(() => editor.loaded && editor.state.get(GAIN) === 0x11);
   });

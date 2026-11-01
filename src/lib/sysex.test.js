@@ -12,6 +12,7 @@ import {
   parseHex,
   parseSysex,
   PATCH_DUMP_SIZE,
+  channelAddress,
   toBase128,
 } from './sysex.js';
 
@@ -31,8 +32,8 @@ describe('checksum', () => {
 });
 
 describe('base 128', () => {
-  it('encodes the patch dump size as 00 00 0F 00', () => {
-    expect(toBase128(PATCH_DUMP_SIZE)).toEqual([0x00, 0x00, 0x0f, 0x00]);
+  it('encodes the patch dump size as 00 00 0F 48 (FxFloorBoard, tested on our amp)', () => {
+    expect(toBase128(PATCH_DUMP_SIZE)).toEqual([0x00, 0x00, 0x0f, 0x48]);
     expect(fromBase128([0x00, 0x00, 0x0f, 0x00])).toBe(1920);
   });
 
@@ -59,10 +60,14 @@ describe('builders', () => {
     );
   });
 
-  it('builds RQ1 for the patch dump (TuxKatana trace)', () => {
-    expect(hex(buildRQ1(ADDR.PATCH, PATCH_DUMP_SIZE))).toBe(
-      'F0 41 00 00 00 00 33 11 60 00 00 00 00 00 0F 00 11 F7',
-    );
+  it('builds RQ1 for 1920 bytes (TuxKatana trace)', () => {
+    expect(hex(buildRQ1(ADDR.PATCH, 1920))).toBe('F0 41 00 00 00 00 33 11 60 00 00 00 00 00 0F 00 11 F7');
+  });
+
+  it('builds RQ1 for the full patch and a stored channel', () => {
+    expect(hex(buildRQ1(ADDR.PATCH, PATCH_DUMP_SIZE))).toBe('F0 41 00 00 00 00 33 11 60 00 00 00 00 00 0F 48 49 F7');
+    expect(hex(buildRQ1(channelAddress(2), PATCH_DUMP_SIZE))).toBe('F0 41 00 00 00 00 33 11 10 02 00 00 00 00 0F 48 17 F7');
+    expect(() => channelAddress(9)).toThrow();
   });
 
   it('builds RQ1 for the active channel with a valid checksum', () => {
@@ -122,7 +127,7 @@ describe('parseSysex', () => {
   it('parses its own RQ1 messages', () => {
     const msg = parseSysex(buildRQ1(ADDR.PATCH, PATCH_DUMP_SIZE));
     expect(msg.kind).toBe('rq1');
-    expect(msg.sizeValue).toBe(1920);
+    expect(msg.sizeValue).toBe(1992);
     expect(msg.checksumOk).toBe(true);
   });
 

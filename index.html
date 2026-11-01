@@ -57,6 +57,56 @@
         </section>
       </fieldset>
 
+      <section class="card patches" aria-labelledby="patches-title">
+        <div class="patches-head">
+          <h2 id="patches-title">Patches</h2>
+          <span id="patches-status" class="patches-status" role="status"></span>
+        </div>
+        <div class="patches-grid">
+          <div>
+            <h3>Kanäle im Amp</h3>
+            <ol id="channel-list" class="channel-list"></ol>
+            <p class="note">
+              „Speichern“ überschreibt den Kanal dauerhaft. Vorher sichert katana-helper den Kanal
+              automatisch in die Bibliothek.
+            </p>
+          </div>
+          <div>
+            <h3>Bibliothek <span id="library-kind" class="note-inline"></span></h3>
+            <div class="library-tools">
+              <button id="lib-store-current" class="secondary small" type="button">Aktuellen Klang sichern</button>
+              <label class="secondary small file-button">
+                Importieren
+                <input id="lib-import" type="file" accept="application/json,.json" />
+              </label>
+              <button id="lib-export-all" class="secondary small" type="button">Alle exportieren</button>
+              <label class="check"><input type="checkbox" id="lib-show-backups" checked /> Auto-Backups</label>
+            </div>
+            <ul id="library-list" class="library-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <dialog id="save-dialog" class="dialog" aria-labelledby="save-title">
+        <form method="dialog" id="save-form">
+          <h2 id="save-title">In Kanal speichern</h2>
+          <p id="save-what" class="dialog-text"></p>
+          <label class="field">
+            <span class="field-label">Kanal</span>
+            <select id="save-channel"></select>
+          </label>
+          <label class="field">
+            <span class="field-label">Name (höchstens 16 Zeichen, ohne Umlaute)</span>
+            <input id="save-name" type="text" maxlength="16" autocomplete="off" />
+          </label>
+          <p id="save-warning" class="dialog-warning"></p>
+          <div class="dialog-buttons">
+            <button value="cancel" class="secondary" formnovalidate>Abbrechen</button>
+            <button value="save" id="save-confirm">Speichern</button>
+          </div>
+        </form>
+      </dialog>
+
       <details id="debug" class="card debug">
         <summary>Debug: Gerät, Ports und Log</summary>
 
@@ -107,7 +157,7 @@
     </main>
 
     <footer class="foot">
-      Nur Google Chrome am Mac mit BOSS-KATANA-Treiber. Speichert nie in einen Kanal.
+      Nur Google Chrome am Mac mit BOSS-KATANA-Treiber. Speichert nur nach Rückfrage und mit Backup in einen Kanal.
       <a href="probe/">Diagnose-Seite (USB-Test)</a>
     </footer>
 

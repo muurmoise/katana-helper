@@ -26,8 +26,21 @@ export const ADDR = {
   GAIN: [0x60, 0x00, 0x06, 0x51],
 };
 
-/** Size to ask for when reading the whole temporary patch (00 00 0F 00 = 1920). */
-export const PATCH_DUMP_SIZE = 1920;
+/**
+ * Size to ask for when reading a whole patch: 00 00 0F 48 = 1992, as FxFloorBoard does.
+ * The amp skips 60 00 07 44–07 7F and answers 1932 bytes (tested 2026-11-01). The older
+ * value 1920 (00 00 0F 00) cut off the last 72 bytes.
+ */
+export const PATCH_DUMP_SIZE = 1992;
+
+/** Bytes a full patch read returns (1992 minus the 60-byte gap). */
+export const PATCH_BYTES = 1932;
+
+/** Stored channel n (0 = Panel, 1–8 = A1–B4), same layout as the temporary patch. */
+export function channelAddress(n) {
+  if (!Number.isInteger(n) || n < 0 || n > 8) throw new RangeError(`Kanal ${n} gibt es nicht`);
+  return [0x10, n, 0x00, 0x00];
+}
 
 /**
  * Roland checksum over address + data bytes:

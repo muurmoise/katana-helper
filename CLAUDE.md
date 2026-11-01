@@ -81,10 +81,29 @@ Sicherheitsregeln im Code:
 Offen: Martins Schreibtest nach `docs/device-test.md` Teil 3, danach Status in
 `docs/protocol.md` nachtragen. Delay 2 und die Effekt-Regler fehlen noch im Editor.
 
-### Phase 3 – Patches/Presets
+### Phase 3 – Patches/Presets ← umgesetzt, Speichertest am Amp durch Martin ausstehend
 
-Patches in IndexedDB, JSON-Export/-Import. Vor jedem Überschreiben eines Kanals automatisch ein
-Backup.
+Bibliothek in IndexedDB (Datenbank `katana-helper`, Store `patches`), JSON-Export und
+-Import, Kanäle direkt lesen (`10 0n 00 00`, ohne Kanalwechsel), Patches in den aktuellen
+Klang laden, aktuellen Klang in einen Kanal speichern. Vor jedem Überschreiben eines Kanals
+automatisch ein Backup.
+
+| Datei | Aufgabe |
+| --- | --- |
+| `src/lib/library.js` | `PatchLibrary` mit `indexedDbBackend` / `memoryBackend`, Import/Export (`katana-helper-library`, auch `katana-helper-backup`) |
+| `src/lib/manager.js` | `PatchManager`: Kanalnamen, Kanal/aktuellen Klang sichern, laden, `saveToChannel` mit Backup und Prüfung |
+| `src/lib/patch.js` | dazu: Patch als `Map` offset → Byte, `patchWrites`, `patchDiff`, `nameBytes` |
+| `src/app/patches-ui.js` | Bereich „Patches“ und Speichern-Dialog |
+
+Regeln im Code:
+- Ganzer Patch = Größe `00 00 0F 48` (1992), Antwort 1932 Byte. Nie wieder 1920.
+- Gespeichert wird nur über `PatchManager.saveToChannel` → `KatanaClient.saveToChannel`,
+  nur A1–B4. `KatanaClient.write` sperrt `7F 00 01 04` weiterhin.
+- Ablauf: Zielkanal sichern (sonst Abbruch) → optional Name → Speicherbefehl → Kanal
+  zurücklesen und vergleichen. LED-Bytes `06 5C`–`06 61` werden nicht geschrieben und nicht
+  verglichen.
+- Patches laden heißt: in den temporären Patch schreiben (10 DT1, 20 ms Pause). Das lässt
+  sich mit „Änderungen zurücknehmen“ rückgängig machen.
 
 ### Phase 4 – PWA
 

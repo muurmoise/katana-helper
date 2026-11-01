@@ -3,17 +3,32 @@
 // - set(): write a value at once (throttled while a slider moves), then read it back.
 // - Messages the amp sends on its own (knobs, buttons, channel) update the state.
 // - undo(): write back the original bytes of everything the editor changed.
-// Nothing here ever saves to a channel.
+// - applyPatch(): put a whole stored patch into the temporary patch (not into a channel).
+// Saving to a channel is PatchManager's job (manager.js), with a backup first.
 
 import { PATCH_DUMP_SIZE, ADDR, fromBase128, hex, toBase128 } from './sysex.js';
 import { channelFromData, describe } from './describe.js';
-import { PatchState, backupFile, runs } from './patch.js';
+import {
+  LIVE_OFFSETS,
+  PATCH_BASE,
+  PatchState,
+  backupFile,
+  nameBytes,
+  patchDiff,
+  patchFromState,
+  patchName,
+  patchWrites,
+  runs,
+} from './patch.js';
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const key = (address) => hex(address);
 
 export class Editor {
-  constructor(connection, { throttleMs = 40, verifyDelayMs = 350, channelSettleMs = 400 } = {}) {
+  constructor(connection, { throttleMs = 40, verifyDelayMs = 350, channelSettleMs = 400, paceMs = 20 } = {}) {
     this.connection = connection;
+    this.paceMs = paceMs;
     this.throttleMs = throttleMs;
     this.verifyDelayMs = verifyDelayMs;
     this.channelSettleMs = channelSettleMs;
@@ -56,12 +71,16 @@ export class Editor {
     this.connection.log(level, text, options);
   }
 
-  reset() {
+  cancelWrites() {
     for (const w of this.writes.values()) {
       clearTimeout(w.timer);
       clearTimeout(w.verifyTimer);
     }
     this.writes.clear();
+  }
+
+  reset() {
+    this.cancelWrites();
     clearTimeout(this.reloadTimer);
     if (this.loaded) {
       this.loaded = false;
@@ -192,11 +211,7 @@ export class Editor {
   async undo() {
     if (!this.ready || !this.dirty) return;
     this.log('info', `===== Änderungen zurücknehmen (${this.changed.size} Byte) =====`);
-    for (const w of this.writes.values()) {
-      clearTimeout(w.timer);
-      clearTimeout(w.verifyTimer);
-    }
-    this.writes.clear();
+    this.cancelWrites();
     const client = this.connection.client;
     for (const [start, length] of runs(this.changed)) {
       const data = Array.from({ length }, (_, i) => this.baseline.get(start + i));
@@ -226,6 +241,58 @@ export class Editor {
       this.state.apply(msg.address, msg.data);
       this.emit();
     }
+  }
+
+  /** Rename the current patch (first 16 bytes of 60 00 00 00). */
+  setName(text) {
+    this.set(ADDR.PATCH_NAME, nameBytes(text), { label: `Name "${text}"` });
+  }
+
+  /** Changed = differs from the baseline, live LED bytes left out. */
+  recomputeChanged() {
+    this.changed.clear();
+    for (const [abs, b] of this.state.bytes) {
+      if (LIVE_OFFSETS.has(abs - PATCH_BASE)) continue;
+      if (this.baseline.get(abs) !== b) this.changed.add(abs);
+    }
+  }
+
+  /** After saving to a channel: the current state is the new starting point. */
+  commitBaseline() {
+    this.baseline = this.state.snapshot();
+    this.changed.clear();
+    this.emit();
+  }
+
+  /**
+   * Put a whole patch (Map offset → byte) into the temporary patch, then read it back and
+   * compare. Undo can take it back like any other change. Nothing is saved to a channel.
+   */
+  async applyPatch(map) {
+    if (!this.ready) return { ok: false, diff: [] };
+    this.cancelWrites();
+    const client = this.connection.client;
+    const writes = patchWrites(map);
+    this.log('info', `===== Patch laden: "${patchName(map)}" (${writes.length} Nachrichten) =====`);
+    for (const w of writes) {
+      await client.write(w.address, w.data, `Laden ${hex(w.address)} (${w.data.length} Byte)`);
+      if (this.paceMs) await sleep(this.paceMs);
+    }
+    await this.load({ newBaseline: false });
+    this.recomputeChanged();
+    const current = patchFromState(this.state);
+    const diff = patchDiff(map, current).filter((o) => map.has(o));
+    if (diff.length === 0) this.log('ok', `Patch "${patchName(map)}" geladen und bestätigt`);
+    else
+      this.log(
+        'warn',
+        `Patch geladen, ${diff.length} Byte weichen ab, z. B. ${diff
+          .slice(0, 6)
+          .map((o) => hex(toBase128(PATCH_BASE + o)))
+          .join(', ')}`,
+      );
+    this.emit();
+    return { ok: diff.length === 0, diff };
   }
 
   backupText() {

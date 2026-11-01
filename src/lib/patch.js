@@ -3,7 +3,7 @@
 // Addresses: docs/protocol.md sections 6 and 7.
 
 import { TABLES } from './describe.js';
-import { fromBase128, hex } from './sysex.js';
+import { fromBase128, hex, toBase128 } from './sysex.js';
 
 const P = (hi, lo) => [0x60, 0x00, hi, lo];
 
@@ -140,3 +140,92 @@ export function backupFile({ chunks, channel, patchName, version, date = new Dat
   };
 }
 
+
+// ---------------------------------------------------------------- whole patches
+// A patch in memory is a Map offset → byte, offsets relative to the patch start
+// (60 00 00 00 for the temporary patch, 10 0n 00 00 for stored channel n).
+
+export const PATCH_BASE = fromBase128([0x60, 0x00, 0x00, 0x00]);
+
+/** Live LED states (06 5C–06 61): reported by the amp, not part of the sound. */
+export const LIVE_OFFSETS = new Set([0x5c, 0x5d, 0x5e, 0x5f, 0x60, 0x61].map((lo) => 0x06 * 128 + lo));
+
+/** Patch map from a KatanaClient.read() result at `base` (4-byte address). */
+export function patchFromRead(result, base) {
+  const start = fromBase128(base);
+  const map = new Map();
+  for (const c of result.chunks) {
+    const o = fromBase128(c.address) - start;
+    c.data.forEach((b, i) => map.set(o + i, b));
+  }
+  return map;
+}
+
+/** Patch map from the editor state (absolute addresses of the temporary patch). */
+export function patchFromState(state) {
+  const map = new Map();
+  for (const [abs, b] of state.bytes) {
+    const o = abs - PATCH_BASE;
+    if (o >= 0 && o < 16384) map.set(o, b);
+  }
+  return map;
+}
+
+/** Map → [{ offset, data: 'hex' }] runs, for storage and files. */
+export function serializePatch(map) {
+  const out = [];
+  for (const [start, length] of runs([...map.keys()])) {
+    const data = Array.from({ length }, (_, i) => map.get(start + i));
+    out.push({ offset: start, data: hex(data) });
+  }
+  return out;
+}
+
+export function parsePatch(chunks) {
+  const map = new Map();
+  for (const c of chunks) {
+    const bytes = typeof c.data === 'string' ? c.data.split(/\s+/).filter(Boolean).map((h) => parseInt(h, 16)) : c.data;
+    if (!Number.isInteger(c.offset) || bytes.some((b) => !Number.isInteger(b) || b < 0 || b > 0x7f)) {
+      throw new Error('Ungültige Patch-Daten');
+    }
+    bytes.forEach((b, i) => map.set(c.offset + i, b));
+  }
+  return map;
+}
+
+/**
+ * DT1 writes that put `map` into the temporary patch: runs of at most `max` bytes,
+ * leaving out the live LED bytes.
+ */
+export function patchWrites(map, { max = 241 } = {}) {
+  const offsets = [...map.keys()].filter((o) => !LIVE_OFFSETS.has(o));
+  const writes = [];
+  for (const [start, length] of runs(offsets)) {
+    for (let s = start; s < start + length; s += max) {
+      const n = Math.min(max, start + length - s);
+      writes.push({
+        address: toBase128(PATCH_BASE + s),
+        data: Array.from({ length: n }, (_, i) => map.get(s + i)),
+      });
+    }
+  }
+  return writes;
+}
+
+/** Offsets where two patches differ, ignoring the live LED bytes. */
+export function patchDiff(a, b) {
+  const keys = new Set([...a.keys(), ...b.keys()]);
+  return [...keys].filter((o) => !LIVE_OFFSETS.has(o) && a.get(o) !== b.get(o)).sort((x, y) => x - y);
+}
+
+export function patchName(map) {
+  return String.fromCharCode(...Array.from({ length: 16 }, (_, i) => map.get(i) ?? 0x20).map((b) => (b >= 0x20 && b < 0x7f ? b : 0x3f))).trimEnd();
+}
+
+/** Text → 16 name bytes. The amp only shows ASCII; other characters become '?', like on the amp. */
+export function nameBytes(text) {
+  return [...String(text).slice(0, 16).padEnd(16)].map((c) => {
+    const code = c.charCodeAt(0);
+    return code >= 0x20 && code < 0x7f ? code : 0x3f;
+  });
+}
