@@ -1,25 +1,39 @@
 # katana-helper
 
-Schlichter Web-Editor für den **BOSS Katana-100 MkII** – direkt im Browser über USB und Web MIDI.
+Schlichter Editor für den **BOSS Katana-100 MkII** im Browser.
 
-- Zielplattformen: Chrome Android, Chrome Desktop
-- Technik: Vanilla JS oder Svelte + Vite, als PWA installierbar
-- Kommunikation: Roland SysEx (RQ1/DT1) über Web MIDI
+- **Mac/Desktop:** Chrome + Web MIDI (BOSS-KATANA-Treiber nötig)
+- **Android:** Chrome + WebUSB (wird gerade getestet)
+- Technik: Vanilla JS + Vite, später als PWA installierbar
+- Kommunikation: Roland SysEx (RQ1/DT1)
 
 ## Status
 
-Frühe Phase – siehe [CLAUDE.md](CLAUDE.md) für die Roadmap und [docs/protocol.md](docs/protocol.md) für das MIDI-Protokoll.
+Phase 1a: USB-Test. Die Testseite liegt unter
+<https://muurmoise.github.io/katana-helper/probe/>, die Anleitung in
+[docs/device-test.md](docs/device-test.md).
 
-## Voraussetzungen
-
-- Katana MkII per USB verbunden
-- Chrome mit Web-MIDI-Unterstützung (SysEx-Berechtigung erforderlich)
-- Seite über HTTPS oder `localhost` geöffnet (Web MIDI braucht einen sicheren Kontext)
+Roadmap: [CLAUDE.md](CLAUDE.md) · MIDI-Protokoll: [docs/protocol.md](docs/protocol.md) ·
+Quellen: [CREDITS.md](CREDITS.md)
 
 ## Entwicklung
 
-_Folgt, sobald das Projekt-Setup (Vite) steht._
+```sh
+npm install
+npm run dev      # http://localhost:5173/katana-helper/
+npm test
+npm run build
+```
+
+Web MIDI und WebUSB laufen nur in einem sicheren Kontext (HTTPS oder `localhost`).
+
+## Deploy
+
+Jeder Push auf `main` baut die Seite und veröffentlicht sie per GitHub Actions auf GitHub
+Pages. Einmalig nötig: Repo → **Settings → Pages → Build and deployment → Source:
+„GitHub Actions“**.
 
 ## Lizenz
 
-_Noch offen._
+Noch offen. Der Code ist selbst geschrieben; Protokollwissen stammt aus den in
+[CREDITS.md](CREDITS.md) genannten Projekten.
