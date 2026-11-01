@@ -38,7 +38,7 @@ const AMP_MODEL_ORDER = [
 export const AMP_MODELS = AMP_MODEL_ORDER.map((v) => [v, TABLES.ampModels[v]]);
 export const AMP_KNOB = entries(TABLES.ampKnob);
 
-const effect = (key, label, on, type, color, slot0, led, knob, types) => ({
+const effect = (key, label, on, type, color, slot0, led, knob, types, extra = {}) => ({
   key,
   label,
   on: P(...on),
@@ -48,15 +48,26 @@ const effect = (key, label, on, type, color, slot0, led, knob, types) => ({
   led: P(0x06, led),
   knob: P(0x06, knob),
   types: entries(types),
+  ...extra,
 });
 
-/** The five effect blocks. slots = type per colour (green, red, yellow). */
+/** What the reverb knob controls, per colour (06 36–06 38): 00 Delay 2, 01 both, 02 Reverb. */
+export const REVERB_LAYER = { slots: [0, 1, 2].map((i) => P(0x06, 0x36 + i)), options: entries(TABLES.reverbKnob) };
+
+/**
+ * The effect blocks. slots = type per colour (green, red, yellow). Delay 2 has no button
+ * or knob of its own: colour, LED and knob belong to the reverb (`shares`).
+ */
 export const EFFECTS = [
   effect('booster', 'Booster', [0x00, 0x10], [0x00, 0x11], 0x39, 0x24, 0x5d, 0x57, TABLES.boosterTypes),
   effect('mod', 'MOD', [0x01, 0x00], [0x01, 0x01], 0x3a, 0x27, 0x5e, 0x58, TABLES.modTypes),
   effect('fx', 'FX', [0x03, 0x00], [0x03, 0x01], 0x3b, 0x2a, 0x5f, 0x59, TABLES.modTypes),
   effect('delay', 'Delay', [0x05, 0x00], [0x05, 0x01], 0x3c, 0x2d, 0x60, 0x5a, TABLES.delayTypes),
-  effect('reverb', 'Reverb', [0x05, 0x40], [0x05, 0x41], 0x3d, 0x30, 0x61, 0x5b, TABLES.reverbTypes),
+  effect('reverb', 'Reverb', [0x05, 0x40], [0x05, 0x41], 0x3d, 0x30, 0x61, 0x5b, TABLES.reverbTypes, { layer: REVERB_LAYER }),
+  effect('delay2', 'Delay 2', [0x05, 0x20], [0x05, 0x21], 0x3d, 0x33, 0x61, 0x5b, TABLES.delayTypes, {
+    shares: 'reverb',
+    layer: REVERB_LAYER,
+  }),
 ];
 
 export const COLORS = ['Grün', 'Rot', 'Gelb'];

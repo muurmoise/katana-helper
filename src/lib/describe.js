@@ -2,6 +2,7 @@
 // Addresses and value tables: docs/protocol.md (sections 4–9). The value lists are facts
 // taken from FxFloorBoard midi.xml (Q2), not copied code.
 
+import { allEffectParams, decodeValue, formatValue } from './effect-params.js';
 import { hex } from './sysex.js';
 
 const ampModels = {
@@ -45,7 +46,7 @@ const reverbKnob = ['Delay', 'Delay+Reverb', 'Reverb'];
 
 export const CHANNEL_NAMES = ['Panel', 'A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4'];
 
-export const TABLES = { ampModels, boosterTypes, modTypes, delayTypes, reverbTypes, ampKnob, colors };
+export const TABLES = { ampModels, boosterTypes, modTypes, delayTypes, reverbTypes, ampKnob, colors, reverbKnob };
 
 const pick = (table) => (d) => {
   const name = table[d[0]];
@@ -97,7 +98,6 @@ field(P(0x03, 0x00), 'FX an/aus', 1, onOff);
 field(P(0x03, 0x01), 'FX-Typ', 1, pick(modTypes));
 field(P(0x05, 0x00), 'Delay an/aus', 1, onOff);
 field(P(0x05, 0x01), 'Delay-Typ', 1, pick(delayTypes));
-field(P(0x05, 0x02), 'Delay-Zeit', 2, (d) => `${d[0] * 128 + d[1]} ms`);
 field(P(0x05, 0x20), 'Delay 2 an/aus', 1, onOff);
 field(P(0x05, 0x21), 'Delay-2-Typ', 1, pick(delayTypes));
 field(P(0x05, 0x40), 'Reverb an/aus', 1, onOff);
@@ -111,6 +111,7 @@ field(P(0x05, 0x41), 'Reverb-Typ', 1, pick(reverbTypes));
   ['FX', modTypes],
   ['Delay', delayTypes],
   ['Reverb', reverbTypes],
+  ['Delay 2', delayTypes],
 ].forEach(([n, table], i) =>
   colors.forEach((c, j) => field(P(0x06, 0x24 + i * 3 + j), `${n}-Typ ${c}`, 1, pick(table))),
 );
@@ -121,6 +122,16 @@ field(P(0x06, 0x5c), 'LED Variation', 1, onOff);
 // Effect LEDs report the colour too: 00 off, 01 green, 02 red (seen on our amp), 03 yellow (assumed).
 const led = (d) => ['aus', 'grün', 'rot', 'gelb'][d[0]] ?? `? (${hex(d)})`;
 ['Booster', 'MOD', 'FX', 'Delay', 'Reverb'].forEach((n, i) => field(P(0x06, 0x5d + i), `LED ${n}`, 1, led));
+
+// Effect detail parameters (effect-params.js). MOD/FX addresses belong to one type each;
+// booster, delay and reverb parameters are shared by all their types.
+const EFFECT_NAMES = { booster: 'Booster', mod: 'MOD', fx: 'FX', delay: 'Delay', delay2: 'Delay 2', reverb: 'Reverb' };
+for (const p of allEffectParams()) {
+  const k = hex(p.address);
+  if (FIELDS.has(k)) continue;
+  const owner = p.key === 'mod' || p.key === 'fx' ? `${EFFECT_NAMES[p.key]} ${modTypes[p.type]}` : EFFECT_NAMES[p.key];
+  FIELDS.set(k, { label: `${owner}: ${p.label}`, size: p.size, format: (d) => formatValue(p, decodeValue(p, d)) });
+}
 
 export function fieldAt(address) {
   return FIELDS.get(hex(address)) ?? null;

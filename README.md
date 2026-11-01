@@ -10,7 +10,9 @@ Schlichter Editor für den **BOSS Katana-100 MkII** im Browser.
 ## Status
 
 Editor: <https://muurmoise.github.io/katana-helper/>. Phase 2 (Regler live) ist umgesetzt:
-Kanal, Amp-Typ und Modell, Gain/EQ/Volume, fünf Effekte mit an/aus, Farbe und Typ.
+Kanal, Amp-Typ und Modell, Gain/EQ/Volume, sechs Effekte (mit Delay 2) mit an/aus, Farbe und
+Typ. Phase 4 (Effekt-Regler): Unter „Regler“ stehen die Einstellungen jedes Effekttyps,
+z. B. Rate und Depth beim Tremolo oder Time beim Delay.
 Phase 3 (Patches) ist umgesetzt: Bibliothek im Browser, JSON-Export und -Import, Kanäle
 sichern und Patches in einen Kanal speichern. Vor jedem Speichern sichert der Editor den
 Zielkanal automatisch. Die Diagnose-Seite liegt unter

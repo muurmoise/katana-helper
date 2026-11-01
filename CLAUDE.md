@@ -79,7 +79,7 @@ Sicherheitsregeln im Code:
 - Antworten an andere MIDI-Programme (zweiter Tab) lösen keinen Neu-Lesevorgang aus.
 
 Offen: Martins Schreibtest nach `docs/device-test.md` Teil 3, danach Status in
-`docs/protocol.md` nachtragen. Delay 2 und die Effekt-Regler fehlen noch im Editor.
+`docs/protocol.md` nachtragen.
 
 ### Phase 3 – Patches/Presets ← umgesetzt, Speichertest am Amp durch Martin ausstehend
 
@@ -105,7 +105,29 @@ Regeln im Code:
 - Patches laden heißt: in den temporären Patch schreiben (10 DT1, 20 ms Pause). Das lässt
   sich mit „Änderungen zurücknehmen“ rückgängig machen.
 
-### Phase 4 – PWA
+### Phase 4 – Effekt-Regler ← umgesetzt, Hörtest am Amp durch Martin ausstehend
+
+Eingeschoben am 2026-11-01 auf Martins Wunsch. Detail-Regler jedes Effekttyps (z. B. Tremolo
+Rate/Depth), Delay 2 als eigener Effekt, Effektregler am Panel („Regler am Amp“), was der
+Reverb-Regler steuert (Delay 2 / beides / Reverb).
+
+| Datei | Aufgabe |
+| --- | --- |
+| `src/lib/effect-params.js` | Regler pro Effekt und Typ: Adresse, Bereich, Anzeige; `effectParams(key, type)`, `encodeValue`/`decodeValue` (2-Byte-Werte = hi × 128 + lo), `BLOCK_SPANS` |
+| `src/lib/patch.js` | dazu: `EFFECTS` mit `delay2` (teilt Farbe, LED und Regler mit dem Reverb), `REVERB_LAYER` |
+| `src/app/editor-ui.js` | Knopf „Regler“ je Effekt, Detailbereich wird bei Typ- oder Farbwechsel neu aufgebaut |
+
+Regeln im Code:
+- Quellen: Q2 `midi.xml` (Adressen, Bereiche) und `stompbox_*.cpp` (welche Regler zu welchem
+  Typ gehören), Gegenprobe Q3. Übersicht in `docs/protocol.md` 7.6.
+- FX = MOD + `02 00`, Delay 2 = Delay + `00 20`. Nie eigene Tabellen dafür anlegen.
+- Nach „Regler am Amp“ liest der Editor den ganzen Effektblock zurück
+  (`related: [{ address, size }]`), weil der Amp den Hauptparameter mitverstellt.
+- Harmonist-User-Skalen und Booster-Custom-Parameter sind bewusst nicht im Editor.
+
+Offen: Martins Hörtest nach `docs/device-test.md` Teil 5.
+
+### Phase 5 – PWA
 
 Service Worker mit Versionierung und Update-Hinweis. Vorher **keinen** Service Worker
 einbauen, damit beim Testen kein Cache stört. Installierbar als Chrome-App am Mac. Cloudflare Pages als

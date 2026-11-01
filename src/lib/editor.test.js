@@ -3,6 +3,7 @@ import { Connection } from './connection.js';
 import { Editor } from './editor.js';
 import { KatanaClient, SAVE_COMMAND } from './katana.js';
 import { Logger } from './log.js';
+import { BLOCK_SPANS, effectParams, encodeValue } from './effect-params.js';
 import { AMP, EFFECTS, KNOBS, backupFile, runs } from './patch.js';
 import { ADDR, fromBase128 } from './sysex.js';
 import { fakeKatana } from './testing/fake-katana.js';
@@ -53,6 +54,27 @@ describe('Editor', () => {
     expect(editor.dirty).toBe(true);
     await until(() => logged('Bestätigt: Gain = 48'));
     expect(amp.byte(GAIN)).toBe(0x30);
+  });
+
+  it('writes two-byte values (delay time) and confirms them', async () => {
+    const { amp, editor, writesTo, logged } = await setup();
+    const time = effectParams('delay', 0).find((p) => p.label === 'Time');
+    editor.set(time.address, encodeValue(time, 450));
+    await until(() => logged('Bestätigt: Delay: Time = 450 ms'));
+    expect(writesTo('60 00 05 02 03 42')).toHaveLength(1);
+    expect([amp.byte([0x60, 0, 0x05, 0x02]), amp.byte([0x60, 0, 0x05, 0x03])]).toEqual([0x03, 0x42]);
+    expect(editor.changed.size).toBe(2);
+  });
+
+  it('reads a whole range back when asked (effect knob moves the main parameter)', async () => {
+    const { amp, editor, logged } = await setup();
+    const rate = [0x60, 0x00, 0x02, 0x14];
+    const mod = EFFECTS.find((e) => e.key === 'mod');
+    editor.set(mod.knob, 0x30, { related: [BLOCK_SPANS.mod] });
+    await until(() => amp.byte(mod.knob) === 0x30);
+    amp.setByte(rate, 0x2f); // what the real amp does with the tremolo rate
+    await until(() => logged('Rücklesen 60 00 01 00 (225 Byte)'));
+    await until(() => editor.state.get(rate) === 0x2f);
   });
 
   it('sends at most one write per throttle period while a slider moves', async () => {
@@ -178,8 +200,11 @@ describe('patch helpers', () => {
     expect(file.chunks).toEqual([{ address: '60 00 00 00', data: '01 02' }]);
   });
 
-  it('describes all five effects with three colour slots', () => {
-    expect(EFFECTS.map((e) => e.label)).toEqual(['Booster', 'MOD', 'FX', 'Delay', 'Reverb']);
+  it('describes the effects with three colour slots each', () => {
+    expect(EFFECTS.map((e) => e.label)).toEqual(['Booster', 'MOD', 'FX', 'Delay', 'Reverb', 'Delay 2']);
+    const [reverb, delay2] = EFFECTS.slice(4);
+    expect(delay2.color).toEqual(reverb.color); // Delay 2 follows the reverb button
+    expect(delay2.slots[0]).toEqual([0x60, 0x00, 0x06, 0x33]);
     for (const e of EFFECTS) expect(e.slots).toHaveLength(3);
     expect(BOOSTER.types.find(([v]) => v === 0x0f)[1]).toBe('Rat');
     expect(BOOSTER.types.some(([v]) => v === 0x07)).toBe(false);

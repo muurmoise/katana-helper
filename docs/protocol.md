@@ -332,7 +332,7 @@ bei Gain/Volume selbst (`doc/Adresses.txt` nennt die `00 2x`-Adressen als Schrei
 
 ---
 
-## 7. Effekte: an/aus und Typ
+## 7. Effekte
 
 ### 7.1 An/Aus
 
@@ -394,7 +394,7 @@ Der Reverb-Regler kann je Farbe auch Delay 2 steuern: `60 00 06 36`/`37`/`38`
 (Grün/Rot/Gelb) mit `00` Delay, `01` Delay+Reverb, `02` Reverb
 (Q2 `midi.xml:43945`, Q3 `reverb.yaml:9–11`). Status: QUELLEN.
 
-### 7.4 Effekt-Regler (Bonus, nicht gefordert)
+### 7.4 Effekt-Regler am Panel
 
 | Regler | Adresse | Werte | Quelle | Status |
 | --- | --- | --- | --- | --- |
@@ -425,6 +425,123 @@ Status: GETESTET (eigen), lesend.
 Effekt-LEDs auch die Farbe: Booster und Reverb in Rot (Farbe `01`) melden `02`, das grüne
 Delay und das grüne MOD melden `01`. Also LED = aus oder Farbe + 1. `03` = gelb ist daraus
 abgeleitet: UNVERIFIZIERT. Die Variation-LED hat keine Farbe.
+
+### 7.6 Effekt-Parameter pro Typ
+
+Die Regler hinter jedem Effekttyp (z. B. Rate und Depth beim Tremolo). Die vollständige
+Tabelle mit Wertebereichen steht im Code: [`src/lib/effect-params.js`](../src/lib/effect-params.js).
+Hier die Übersicht.
+
+**Quellen:**
+
+- Adressen, Wertebereiche und Wertelisten: Q2 `midi.xml`, Abschnitt `<Structure>`
+  Blöcke `00`, `01`/`02`, `05`.
+- Welche Regler zu welchem Typ gehören: Q2 `stompbox_od.cpp`, `stompbox_fx1.cpp`,
+  `stompbox_dd.cpp`, `stompbox_ce.cpp`, `stompbox_rv.cpp`.
+- Gegenprobe: Q3 `params/booster.yaml`, `delay.yaml`, `reverb.yaml`, `params/modfx/*.yaml`.
+  Alle Adressen, die Q3 nennt, stimmen mit Q2 überein.
+
+**Status:**
+
+- Alle Adressen in diesem Abschnitt haben den Status **QUELLEN**, sofern nicht anders
+  angegeben.
+- Am eigenen Amp gelesen und mit unverändertem Wert zurückgeschrieben (Abschnitt 10.5):
+  MOD-Tremolo-Rate `02 14`, Delay-Zeit `05 02` (2 Byte) und Reverb-Zeit `05 42`. Diese drei
+  sind **GETESTET (eigen)** für Lesen, Schreiben und Rücklesen.
+- Ob die übrigen Werte am Amp hörbar wirken, ist noch offen (`device-test.md` Teil 5).
+
+**Werteformate:**
+
+| Format | Rohwert | Anzeige |
+| --- | --- | --- |
+| Prozent | `00`–`64` | 0–100 |
+| ±50 | `00`–`64` | −50…+50 (`32` = 0) |
+| dB | `00`–`28` | −20…+20 dB (EQ) |
+| Halbtöne | `00`–`30` | −24…+24 (Pitch) |
+| Level 120 | `00`–`78` | 0–120 (Booster Drive, Delay Effect Level) |
+| 2 Byte | `hi lo`, Wert = hi × 128 + lo | Delay-Zeit 1–2000 ms, Dual-Zeiten 1–1000 ms, Reverb Pre Delay 0–500 ms, PS/HR Pre Delay 0–300 ms, DC-30 Repeat Rate 40–600 |
+| Reverb-Zeit | `00`–`63` | 0.1–10.0 s (Rohwert + 1) / 10 |
+| Liste | ab `00` fortlaufend | z. B. Low Cut: Flat, 20 Hz … 800 Hz (18 Werte); High Cut: 630 Hz … 12.5 kHz, Flat (15 Werte) |
+
+**Booster** (`60 00 00 1x`, alle Typen gleich): Drive `12` (0–120), Bottom `13` (±50),
+Tone `14` (±50), Solo `15`, Solo Level `16`, Effect Level `17`, Direct Mix `18`.
+Die Custom-Parameter `19`–`1E` sind nicht im Editor, weil die Typliste keinen Custom-Typ
+enthält.
+
+**MOD** (`60 00 01 xx`/`02 xx`). **FX** ist derselbe Aufbau um `02 00` verschoben (`03 xx`/`04 xx`).
+
+| Typ | Adressen | Regler |
+| --- | --- | --- |
+| `00` T.Wah | `01 02`–`08` | Mode, Polarity, Sens, Frequency, Peak, Direct Mix, Effect Level |
+| `01` Auto Wah | `01 09`–`0F` | Mode, Frequency, Peak, Rate, Depth, Direct Mix, Effect Level |
+| `02` Pedal Wah | `01 10`–`15` | Wah Type, Pedal Position/Min/Max, Effect Level, Direct Mix |
+| `03` Compressor | `01 16`–`1A` | Comp Type, Sustain, Attack, Tone (±50), Effect Level |
+| `04` Limiter | `01 1B`–`20` | Limiter Type, Attack, Threshold, Ratio (18 Werte), Release, Effect Level |
+| `06` Graphic EQ | `01 21`–`2B` | 31 Hz … 16 kHz, Level (je ±20 dB) |
+| `07` Para EQ | `01 2C`–`36` | Low Cut, Low Gain, Low-Mid Freq/Q/Gain, High-Mid Freq/Q/Gain, High Gain, High Cut, Level |
+| `09` Guitar Sim | `01 37`–`3B` | Sim Type, Low, High, Level, Body |
+| `0A` Slow Gear | `01 3C`–`3E` | Sens, Rise Time, Level |
+| `0C` Wave Synth | `01 3F`–`46` | Wave, Cutoff, Resonance, Filter Sens/Decay/Depth, Synth Level, Direct Mix |
+| `0E` Octave | `01 47`–`49` | Range, Octave Level, Direct Mix |
+| `0F` Pitch Shifter | `01 4A`–`58` | Voice, PS1/PS2 Mode, Pitch, Fine, Pre Delay (2 Byte), Level, Feedback, Direct Mix |
+| `10` Harmonist | `01 59`–`63` | Voice, HR1/HR2 Harmony, Pre Delay (2 Byte), Level, Feedback, Direct Mix. User-Skalen `01 64`–`7B` nicht im Editor |
+| `12` AC Processor | `01 7C`–`02 02` | AC Type, Bass, Middle, Middle Freq, Treble, Presence, Level |
+| `13` Phaser | `02 03`–`0A` | Type, Rate, Depth, Manual, Resonance, Step Rate (`00` Off, sonst Wert − 1), Effect Level, Direct Mix |
+| `14` Flanger | `02 0B`–`12` | Rate, Depth, Manual, Resonance, Low Cut (`10`), Effect Level, Direct Mix (`0F` Separation laut Q2 nicht auf der Seite) |
+| `15` Tremolo | `02 13`–`16` | Wave Shape, Rate, Depth, Level |
+| `16` Rotary | `02 19`–`1D` | Rate, Rise Time, Fall Time, Depth, Level (`17` Speed und `18` Rate Slow zeigt Q2 nicht) |
+| `17` Uni-V | `02 1E`–`20` | Rate, Depth, Level |
+| `19` Slicer | `02 21`–`25` | Pattern P1–P20, Rate, Trigger Sens, Effect Level, Direct Mix |
+| `1A` Vibrato | `02 26`, `27`, `2A` | Rate, Depth, Level |
+| `1B` Ring Mod | `02 2B`–`2E` | Mode, Frequency, Effect Level, Direct Mix |
+| `1C` Humanizer | `02 2F`–`36` | Mode, Vowel 1/2, Sens, Rate, Depth, Manual, Level |
+| `1D` 2x2 Chorus | `02 37`–`40` | Xover Freq, Low/High Rate, Depth, Pre Delay (0–40 ms in 0.5er-Schritten), Level, Direct Mix |
+| `1F` AC Guitar Sim | `02 41`–`45` | Top, Body, Low, High, Level |
+| `23` Phaser 90E | `02 46`–`47` | Script, Speed |
+| `24` Flanger 117E | `02 48`–`4B` | Manual, Width, Speed, Regen |
+| `25` Wah 95E | `02 4C`–`50` | Pedal Position/Min/Max, Effect Level, Direct Mix |
+| `26` Delay Chorus 30 | `02 51`–`59` | Selector, Input Volume, Chorus Intensity, Echo Repeat Rate (2 Byte), Echo Intensity, Echo Volume, Tone, Output |
+| `27` Heavy Octave | `02 5A`–`5C` | −1 Oct, −2 Oct, Direct Mix |
+| `28` Pedal Bend | `02 5D`–`60` | Pitch (±24), Pedal Position, Effect Level, Direct Mix |
+
+**Delay 1** (`60 00 05 0x`/`1x`). **Delay 2** ist derselbe Aufbau um `20` verschoben (`05 2x`/`3x`).
+
+| Adresse | Regler | Typen |
+| --- | --- | --- |
+| `05 02`–`03` | Time (2 Byte, 1–2000 ms) | alle außer Dual |
+| `05 04` | Feedback | alle außer Dual |
+| `05 05` | High Cut | Digital, Pan, Reverse, Analog, Tape Echo, Modulate |
+| `05 06` | Effect Level (0–120) | alle außer Dual |
+| `05 07` | Direct Mix | alle |
+| `05 08` | Tap Time (%) | Pan |
+| `05 09`–`0D` | D1 Time (2 Byte, 1–1000 ms), Feedback, High Cut, Effect Level | Dual Series/Parallel/L/R; D1 High Cut `05 0C` auch bei Stereo |
+| `05 0E`–`12` | D2 Time, Feedback, High Cut, Effect Level | Dual |
+| `05 13`–`14` | Mod Rate, Mod Depth | Modulate, SDE-3000 |
+| `05 15`–`19` | Vintage LPF, Filter 8/17 kHz, Feedback Phase, Effect Phase, Modulation | SDE-3000 |
+
+UNVERIFIZIERT: Bei Stereo nimmt Q2 für Delay 1 und Delay 2 den D1-High-Cut (`05 0C`/`05 2C`).
+Bei Pan nimmt Q2 für Delay 1 `05 0C`, für Delay 2 aber `05 25`. Der Editor nutzt bei Pan
+den normalen High Cut `05 05`/`05 25`. Das bleibt am Amp zu prüfen.
+
+Delay 2 hat eigene Typ-Plätze pro Farbe (`06 33`/`34`/`35`, Q2 `midi.xml`, Panel-Block). Farbe,
+LED und Regler teilt es mit dem Reverb (`06 3D`, `06 61`, `06 5B`). Was der Reverb-Regler
+steuert, steht pro Farbe in `06 36`–`38` (7.3).
+
+**Reverb** (`60 00 05 4x`, alle Typen gleich):
+
+| Adresse | Regler |
+| --- | --- |
+| `05 42` | Time (0.1–10.0 s) |
+| `05 43`–`44` | Pre Delay (2 Byte, 0–500 ms) |
+| `05 45` | Low Cut |
+| `05 46` | High Cut |
+| `05 47` | Density (0–10) |
+| `05 48` | Effect Level |
+| `05 49` | Direct Mix |
+| `05 4B` | Spring Color (nur Typ Spring) |
+
+Der Editor zeigt außerdem den **Effekt-Regler am Panel** (7.4). Nach dem Schreiben liest er
+den ganzen Effektblock zurück, weil der Amp den Hauptparameter des Typs mitverstellt.
 
 ---
 
@@ -580,6 +697,21 @@ Unsichtbare Chrome-Instanz, Mac, Amp im Panel-Kanal:
   zurückgeschrieben: höchstens 241 Byte je Nachricht, 20 ms Pause, LED-Bytes ausgelassen.
   Danach den ganzen Patch zurückgelesen: keine Abweichung. Status: GETESTET (eigen).
 - Speichern in einen Kanal wurde nicht getestet (`docs/device-test.md` Teil 4).
+
+### 10.5 Effekt-Parameter, 2026-11-01
+
+Unsichtbare Chrome-Instanz, Mac, Amp im Panel-Kanal, alle Effekte aus:
+
+- Ganzer Patch gelesen, alle Detail-Regler angezeigt. Die Werte sind plausibel, z. B.
+  Booster Blues Drive: Drive 11, Bottom +33, Effect Level 75. MOD Tremolo: Wave Shape 50,
+  Rate 30, Depth 65, Level 50. Delay Reverse: 245 ms. Reverb Hall 2: 10.0 s. Delay 2
+  Tape Echo: 400 ms.
+- Die Panel-Regler `06 57`–`06 5B` stehen bei ausgeschalteten Effekten auf `00`. Das passt zu
+  7.4 (`00` = aus).
+- Mit unverändertem Wert geschrieben und zurückgelesen: MOD Tremolo Rate `02 14` = 30,
+  Delay Time `05 02 01 75` = 245 ms (2 Byte), Reverb Time `05 42` = `63` (10.0 s). Alle drei
+  hat der Amp bestätigt. Danach meldete der Editor „Keine Änderungen“.
+- Hörbare Änderungen sind noch nicht getestet (`device-test.md` Teil 5).
 
 ## 11. Offene Punkte
 

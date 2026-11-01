@@ -156,9 +156,9 @@ Editor: <https://muurmoise.github.io/katana-helper/>, Google Chrome, Amp per USB
 - [ ] **Preamp-Adressen `00 2x` als Schreibziel:** Der Editor nutzt `06 5x`; `00 2x` wird
       nur gelesen. Schreiben auf `00 2x` bleibt ungetestet.
 - [ ] **Delay 2** an/aus und Typ (`60 00 05 20` / `05 21`), dazu die Reverb-Regler-Belegung
-      `60 00 06 36`–`38` (Delay / Delay+Reverb / Reverb). Noch nicht im Editor.
+      `60 00 06 36`–`38` (Delay / Delay+Reverb / Reverb). Jetzt im Editor, siehe Teil 5.
 - [ ] **Effekt-Regler** `06 57`–`06 5B`: Stimmt die Skala „`00` = aus, `01`–`65` = 0–100“?
-      Noch nicht im Editor.
+      Jetzt im Editor („Regler am Amp“), siehe Teil 5.
 - [ ] **Speichern** (`7F 00 01 04`): siehe Teil 4.
 
 ---
@@ -194,3 +194,36 @@ Bereich „Patches“ unten im Editor. Lesen, Sichern und Laden sind am Amp gete
 - [ ] Einen Patch über ⋯ → **„Exportieren“** sichern, ihn löschen, dann über
       **„Importieren“** wieder einlesen und **„Laden“**.
 - [ ] Die Datei aus „Backup speichern“ (oben im Editor) lässt sich ebenfalls importieren.
+
+---
+
+## Teil 5 – Effekt-Regler (Phase 4)
+
+Im Editor hat jeder Effekt rechts den Knopf **„Regler“**. Er klappt die Einstellungen des
+gewählten Typs auf, z. B. beim Tremolo Wave Shape, Rate, Depth und Level. Lesen ist am Amp
+getestet, Schreiben nur mit unveränderten Werten (`docs/protocol.md` 10.5). Offen ist, ob die
+Regler **hörbar** das tun, was sie sollen.
+
+Regeln wie in Teil 3: zuerst „Backup speichern“, im Panel-Kanal testen, Debug-Log offen.
+Nichts davon wird gespeichert.
+
+### Ablauf
+
+1. [ ] **MOD auf Tremolo**, einschalten, „Regler“ aufklappen. Rate und Depth bewegen: Ändert
+       sich der Klang so, wie es die Namen sagen?
+2. [ ] **Regler am Amp** im Editor bewegen. Was passiert am Amp? Geht der Effekt bei „aus“
+       aus? Bewegt sich dabei auch Rate (wie beim Drehen am Amp, `docs/protocol.md` 7.4)?
+3. [ ] **Delay:** Time verstellen (z. B. 100 ms und 800 ms). Hört man den Unterschied?
+       Dann einen **Dual**-Typ wählen: Erscheinen D1/D2-Regler, und wirken sie?
+4. [ ] **Delay Pan und Stereo:** Wirkt „High Cut“? (Die Quellen sind sich hier nicht
+       einig.)
+5. [ ] **Reverb:** Time, Pre Delay und Effect Level bewegen. Bei Spring zusätzlich „Spring
+       Color“.
+6. [ ] **Delay 2** einschalten. „Reverb-Regler steuert“ auf „Delay“ oder „Delay+Reverb“
+       stellen und am Amp den Reverb-Regler drehen. Hört man Delay 2?
+7. [ ] **FX** auf denselben Typ wie MOD stellen und einen Regler bewegen. Ändert sich nur FX?
+8. [ ] Am Amp einen Effektregler drehen. Folgen die Werte im Editor?
+9. [ ] Ein paar seltenere Typen ausprobieren: Pitch Shifter (Pitch, Pre Delay), Para EQ,
+       2x2 Chorus, DC-30. Stimmt die Anzeige mit BOSS Tone Studio überein, falls zur Hand?
+10. [ ] **„Änderungen zurücknehmen“**. Klingt es wieder wie vorher?
+11. [ ] Debug → „Als Datei“ und Bescheid geben.

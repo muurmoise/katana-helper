@@ -352,9 +352,14 @@ summary:focus-visible,
   gap: 10px;
 }
 
+.fx-item {
+  display: grid;
+  gap: 0;
+}
+
 .fx {
   display: grid;
-  grid-template-columns: 120px auto minmax(0, 1fr);
+  grid-template-columns: 120px auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 8px 10px;
@@ -387,8 +392,112 @@ summary:focus-visible,
   .fx {
     grid-template-columns: minmax(0, 1fr) auto;
   }
+  .fx .colors,
+  .fx .fx-note {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
   .fx select {
     grid-column: 1 / -1;
+    grid-row: 3;
+  }
+  .fx .fx-toggle {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+.fx-toggle {
+  white-space: nowrap;
+}
+
+.fx-note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.fx-toggle::after {
+  content: ' ▾';
+}
+
+.fx-toggle.open::after {
+  content: ' ▴';
+}
+
+.fx-toggle.open {
+  border-color: var(--fg);
+}
+
+/* detail panel below an effect row */
+.fx-detail {
+  margin: 0 0 0 4px;
+  padding: 10px 12px 12px;
+  border-left: 1px dashed var(--line);
+}
+
+.fx-detail.off .params {
+  opacity: 0.7;
+}
+
+.fx-detail-title {
+  margin: 10px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.params {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px 18px;
+}
+
+.params.top:empty {
+  display: none;
+}
+
+.param {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) 68px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.param.list {
+  grid-template-columns: 112px minmax(0, 1fr);
+}
+
+.param label {
+  overflow-wrap: anywhere;
+}
+
+.param input[type='range'] {
+  width: 100%;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.param output {
+  font: 600 13px/1 var(--mono);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.param select {
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .params {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .param {
+    grid-template-columns: 96px minmax(0, 1fr) 64px;
+  }
+  .param.list {
+    grid-template-columns: 96px minmax(0, 1fr);
   }
 }
 

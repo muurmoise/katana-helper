@@ -183,10 +183,13 @@ export class Editor {
         this.log('warn', `Amp meldet ${describe(w.address, got)}, gesendet war ${hex(expected)}`);
         if (got.every((b) => b !== undefined)) this.state.apply(w.address, got);
       }
+      // related: an address (one byte) or { address, size } for a whole range.
       for (const rel of w.related) {
-        const rr = await client.read(rel, 1, `Rücklesen ${hex(rel)}`);
-        const b = rr.byteAt(rel);
-        if (b !== undefined) this.state.apply(rel, [b]);
+        const { address, size } = Array.isArray(rel) ? { address: rel, size: 1 } : rel;
+        const rr = await client.read(address, size, `Rücklesen ${hex(address)}${size > 1 ? ` (${size} Byte)` : ''}`);
+        const start = fromBase128(address);
+        const bytes = Array.from({ length: size }, (_, i) => rr.byteAt(toBase128(start + i)));
+        if (bytes.every((b) => b !== undefined)) this.state.apply(address, bytes);
       }
     } catch (e) {
       this.log('warn', `Rücklesen: ${e.message}`);
