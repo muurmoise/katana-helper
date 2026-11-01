@@ -12,6 +12,9 @@ Nach jedem Test bitte den **kompletten Log** zurückschicken, mit „Log kopiere
 
 ## Teil 1 – Android (Chrome + WebUSB)
 
+> **Entfällt.** Android wird seit 2026-11-01 nicht mehr unterstützt. Der Abschnitt bleibt nur
+> zur Dokumentation stehen.
+
 ### Vorbereitung
 
 - [ ] **Chrome-Version** notieren: Chrome → ⋮ → Einstellungen → Über Chrome.

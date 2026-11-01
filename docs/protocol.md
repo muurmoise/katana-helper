@@ -74,7 +74,10 @@ nur Q2–Q4.
 | WebUSB am Mac | Mit installiertem Treiber schlägt `claimInterface(3)` fehl („Unable to claim interface“), weil der Treiber das Interface hält. `open()` klappt. Die Descriptoren entsprechen Q4 (Interface 3: Alt 0 Bulk `0x03`/`0x84`, Alt 1 Interrupt `0x03`/`0x85`). | eigener Test | **GETESTET (eigen)** |
 | Android | Android-MIDI (`android.media.midi`), auf dem Chrome Web MIDI aufsetzt, **erkennt den Katana MkII nicht**. Laut Q4 ist das eine Folge der Vendor-USB-Klasse, nicht der Berechtigungen. | Q4 §4.1 | UNVERIFIZIERT (für Chrome Android) |
 
-**Folge für das Projekt:** Web MIDI wird auf Chrome Desktop (mit Treiber) sehr
+**Entscheidung 2026-11-01:** katana-helper unterstützt nur Mac + Chrome über Web MIDI. Der
+folgende Absatz ist der ursprüngliche Plan und bleibt zur Dokumentation stehen.
+
+**Ursprünglicher Plan:** Web MIDI wird auf Chrome Desktop (mit Treiber) sehr
 wahrscheinlich funktionieren, auf **Chrome Android sehr wahrscheinlich nicht**. Möglicher
 Ausweg für Android: **WebUSB** (in Chrome Android verfügbar), Interface 3 selbst
 beanspruchen und die SysEx-Nachrichten in USB-MIDI-Pakete (CIN `0x4`–`0x7`) zerlegen.

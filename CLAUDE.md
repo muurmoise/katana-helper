@@ -9,60 +9,53 @@ unter `/katana-helper/`.
 Hinweis: Der Projektpfad enthält ein Leerzeichen (`katana helper`). Pfade in Shell-Befehlen
 immer quoten.
 
-## Zielplattformen
+## Zielplattform
 
-| Plattform | Weg | Status |
-| --- | --- | --- |
-| Mac/Desktop | Chrome + **Web MIDI** + BOSS-KATANA-Treiber | **funktioniert** (getestet 2026-11-01, macOS 27, Chrome 156, Treiber 1.0.4) |
-| Android | Chrome + **WebUSB** (Interface selbst beanspruchen, USB-MIDI-Pakete selbst packen) | offen → Phase 1a |
-| ~~iPad~~ | gestrichen: herstellerspezifisches USB, kein Treiber, kein WebUSB in Safari | – |
+**Nur Mac + Google Chrome** über **Web MIDI** mit installiertem BOSS-KATANA-Treiber
+(Entscheidung 2026-11-01). Getestet und funktioniert: macOS 27, Chrome 156, Treiber 1.0.4,
+Ports „KATANA“ (SysEx) und „KATANA DAW CTRL“.
 
-Hintergrund: Der Katana MkII meldet sich per USB herstellerspezifisch (Klasse 255), nicht als
-Standard-USB-MIDI. Android-MIDI und damit Web MIDI in Chrome Android sehen ihn vermutlich
-nicht. Details: `docs/protocol.md` Abschnitt 1.
+Nicht unterstützt, auch nicht nebenbei:
+- ~~Android~~: gestrichen am 2026-11-01. Kein WebUSB-Transport, keine native App.
+- ~~iPad~~: gestrichen, herstellerspezifisches USB, kein Treiber, kein WebUSB in Safari.
+- Safari und Firefox haben kein Web MIDI. Die App zeigt dort nur einen Hinweis auf Chrome.
+
+Hintergrund: Der Katana MkII meldet sich per USB herstellerspezifisch (Klasse 255). Erst der
+BOSS-Treiber macht daraus MIDI-Ports. Details: `docs/protocol.md` Abschnitt 1.
 
 ## Phasen
 
-### Phase 1a – USB-Test ← aktuell
+### Phase 1a – USB-Test ✓ erledigt
 
-- Testseite `/katana-helper/probe/` (`probe/index.html`, `src/probe/`).
-- Bibliotheken `src/lib/sysex.js` (Checksumme, RQ1/DT1 bauen, parsen) und
-  `src/lib/usbmidi.js` (USB-MIDI-Pakete packen/entpacken), beide mit Vitest-Tests.
-- Martin testet nach `docs/device-test.md` auf Android und Mac und schickt die Logs.
-  Mac: erledigt (2026-11-01, Web MIDI klappt). Android: ausstehend.
-
-### Entscheidung nach dem Test
-
-**WEG A – WebUSB klappt auf Android:**
-Ein Transport-Interface `KatanaTransport` mit zwei Implementierungen, `WebMidiTransport` und
-`WebUsbTransport`. Die App erkennt automatisch, welcher Weg verfügbar ist. Danach weiter mit den
-Phasen 1–4.
-
-**WEG B – WebUSB klappt nicht:**
-Die Web-App bleibt für den Mac. Für Android gibt es eine native Kotlin-App
-(`android.hardware.usb`, `UsbManager`, Bulk-Transfers) im Unterordner `/android`. Grundlage ist
-dieselbe Protokoll-Doku. ktnacontrol dient nur als inhaltliches Vorbild, ohne Code zu übernehmen
-(es hat keine Lizenz, siehe unten). Verteilung per APK-Sideload, kein Play Store.
+- Testseite `/katana-helper/probe/` (`probe/index.html`, `src/probe/`) bleibt als
+  Diagnose-Werkzeug bestehen.
+- `src/lib/sysex.js` ist die Grundlage der App.
+- `src/lib/usbmidi.js` (WebUSB-Pakete) wird von der App **nicht** verwendet. Es bleibt nur für
+  den WebUSB-Teil der Testseite.
+- Ergebnisse: `docs/protocol.md` Abschnitt 10.
 
 ### Phase 1 – Verbindung + Debug
 
-Verbinden, Gerät erkennen, Edit-Mode, Debug-Log. Baut auf `sysex.js`/`usbmidi.js` aus 1a auf.
+Web MIDI öffnen (`sysex: true`), Port „KATANA“ automatisch wählen (nicht „DAW CTRL“), Gerät per
+Identity Request erkennen, Edit-Mode, Debug-Log, Hinweis bei fehlendem Web MIDI. Baut auf
+`sysex.js` auf. Ein Transport-Modul kapselt Web MIDI, damit der Rest testbar bleibt.
 
 ### Phase 2 – Regler live
 
 Amp-Typ, Gain, Volume, EQ, Effekte an/aus + Typ, Kanalwechsel, live in beide Richtungen.
-Dazu gehören die offenen Prüfpunkte aus `docs/device-test.md` Teil 3 (Farbwerte, Preamp- vs.
-Bedienfeld-Adressen, Amp-Typ). Schreibtests nur nach Backup.
+Dazu gehören die offenen Prüfpunkte aus `docs/device-test.md` Teil 3 (Amp-Typ, Kanalwechsel,
+Delay 2). Farbwerte und Regler-Adressen sind geklärt (`docs/protocol.md` 6.2, 7.3).
+Schreibtests nur nach Backup.
 
 ### Phase 3 – Patches/Presets
 
 Patches in IndexedDB, JSON-Export/-Import. Vor jedem Überschreiben eines Kanals automatisch ein
 Backup.
 
-### Phase 4 – PWA + Tablet
+### Phase 4 – PWA
 
 Service Worker mit Versionierung und Update-Hinweis. Vorher **keinen** Service Worker
-einbauen, damit beim Testen kein Cache stört. Tablet-UI im Querformat. Cloudflare Pages als
+einbauen, damit beim Testen kein Cache stört. Installierbar als Chrome-App am Mac. Cloudflare Pages als
 Alternative zu GitHub Pages im README beschreiben.
 
 ## Konventionen

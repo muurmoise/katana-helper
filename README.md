@@ -2,16 +2,15 @@
 
 Schlichter Editor für den **BOSS Katana-100 MkII** im Browser.
 
-- **Mac/Desktop:** Chrome + Web MIDI (BOSS-KATANA-Treiber nötig), getestet und funktioniert
-- **Android:** Chrome + WebUSB (wird gerade getestet)
+- **Nur Mac + Google Chrome** über Web MIDI. Der BOSS-KATANA-Treiber muss installiert sein.
+  Safari, Firefox, Android und iPad werden nicht unterstützt.
 - Technik: Vanilla JS + Vite, später als PWA installierbar
 - Kommunikation: Roland SysEx (RQ1/DT1)
 
 ## Status
 
-Phase 1a: USB-Test. Die Testseite liegt unter
-<https://muurmoise.github.io/katana-helper/probe/>, die Anleitung in
-[docs/device-test.md](docs/device-test.md).
+USB-Test (Phase 1a) abgeschlossen, als Nächstes kommt Phase 1 (Verbindung + Debug). Die
+Testseite bleibt als Diagnose unter <https://muurmoise.github.io/katana-helper/probe/>.
 
 Roadmap: [CLAUDE.md](CLAUDE.md) · MIDI-Protokoll: [docs/protocol.md](docs/protocol.md) ·
 Quellen: [CREDITS.md](CREDITS.md)
