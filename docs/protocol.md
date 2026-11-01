@@ -3,14 +3,15 @@
 Referenz für alle MIDI-Nachrichten, die katana-helper an den BOSS Katana MkII schickt
 oder von ihm empfängt. Stand: 2026-11-01.
 
-> **Noch nichts davon ist von uns am eigenen Gerät getestet.** Die Status-Spalte sagt,
-> wie gut eine Angabe durch fremde Quellen gedeckt ist. Sobald wir selbst testen, wird
-> der Status hier nachgetragen.
+> **Erster eigener Test am 2026-11-01** (Mac, nur lesend): Siehe Abschnitt 10. Was dort
+> bestätigt wurde, trägt den Status **GETESTET (eigen)**. Alles andere ist weiter nur durch
+> fremde Quellen gedeckt.
 
 ## Status-Legende
 
 | Status | Bedeutung |
 | --- | --- |
+| **GETESTET (eigen)** | Von uns am eigenen Katana MkII gemessen (Abschnitt 10). |
 | **GETESTET (Q4)** | Ein Drittprojekt (ktnacontrol) berichtet einen Test am echten Katana MkII (Ton ändert sich und/oder das Gerät meldet den Wert zurück). Außerdem in mindestens einer weiteren MkII-Quelle. |
 | **QUELLEN** | Mindestens zwei MkII-Quellen stimmen überein, aber kein bekannter Hardwaretest. |
 | **UNVERIFIZIERT** | Nur eine Quelle, Quellen widersprechen sich, nur für den MkI belegt oder von uns abgeleitet. |
@@ -69,7 +70,8 @@ nur Q2–Q4.
 | Punkt | Inhalt | Quelle | Status |
 | --- | --- | --- | --- |
 | USB-Klasse | Der MkII meldet sich als **Vendor Specific** (`bDeviceClass 255`), **nicht** als Standard-USB-MIDI-Gerät. MIDI läuft über Interface 3 (Bulk OUT `0x03`, Bulk IN `0x84`), aber im üblichen 4-Byte-USB-MIDI-Paketformat. | Q4 `CLAUDE.md` §4.1 (per `lsusb -v` am Gerät) | GETESTET (Q4) |
-| Desktop | macOS und Windows brauchen den BOSS-KATANA-Treiber; erst dann erscheinen MIDI-Ports, die Chrome per Web MIDI sieht. Linux: `snd-usb-audio` bringt Roland-Quirks mit. | Q5, Q4 §4.1 | UNVERIFIZIERT (für Chrome) |
+| Desktop | macOS und Windows brauchen den BOSS-KATANA-Treiber; erst dann erscheinen MIDI-Ports, die Chrome per Web MIDI sieht. Linux: `snd-usb-audio` bringt Roland-Quirks mit. | Q5, Q4 §4.1, eigener Test | **GETESTET (eigen)** für macOS 27.0.1 + Chrome 156 + Treiber 1.0.4: Ports „KATANA“ und „KATANA DAW CTRL“, SysEx funktioniert über „KATANA“. |
+| WebUSB am Mac | Mit installiertem Treiber schlägt `claimInterface(3)` fehl („Unable to claim interface“), weil der Treiber das Interface hält. `open()` klappt. Die Descriptoren entsprechen Q4 (Interface 3: Alt 0 Bulk `0x03`/`0x84`, Alt 1 Interrupt `0x03`/`0x85`). | eigener Test | **GETESTET (eigen)** |
 | Android | Android-MIDI (`android.media.midi`), auf dem Chrome Web MIDI aufsetzt, **erkennt den Katana MkII nicht**. Laut Q4 ist das eine Folge der Vendor-USB-Klasse, nicht der Berechtigungen. | Q4 §4.1 | UNVERIFIZIERT (für Chrome Android) |
 
 **Folge für das Projekt:** Web MIDI wird auf Chrome Desktop (mit Treiber) sehr
@@ -119,6 +121,14 @@ Status: QUELLEN.
 Zusätzlich liefert `RQ1 10 00 00 00`, Größe `00 00 00 10`, den Gerätenamen als ASCII
 (`KATANA Mk2`, Q3 `HOW.md`). Status: QUELLEN.
 
+**Eigener Test:** Die Identity Reply ist Byte für Byte gleich mit dem Beispiel aus Q3
+(GETESTET (eigen)). `RQ1 10 00 00 00` lieferte bei uns aber **nicht** „KATANA Mk2“,
+sondern den Namen des aktuellen Panel-Klangs („muur zusamstra?e“, gleich wie
+`60 00 00 00`). Da `10 01 00 00` … `10 08 00 00` die Kanäle A1–B4 sind, ist
+`10 00 00 00` vermutlich der **gespeicherte Panel-Patch** und „KATANA Mk2“ bei Q3 nur
+dessen Werksname. Status der Deutung: UNVERIFIZIERT. Im Code heißt die Adresse deshalb
+`ADDR.PANEL_NAME`. (Nicht-ASCII-Zeichen wie „ß“ zeigt der Amp als `3F` = „?“.)
+
 ### 2.3 RQ1 – Daten anfordern (`11`)
 
 ```
@@ -131,6 +141,11 @@ F0 41 00 00 00 00 33 11  a1 a2 a3 a4  s1 s2 s3 s4  sum F7
 - Die Antwort kommt als eine oder **mehrere** DT1-Nachrichten, jede mit eigener
   Startadresse. Beispiel: `RQ1 60 00 00 00`, Größe `00 00 0F 00` (1920) → 5 × 241 Byte
   + 1 × 139 Byte (Q3 `HOW.md`).
+- **Eigener Test:** Dieselbe Anfrage lieferte bei uns 8 Nachrichten mit zusammen
+  1860 Byte: `60 00 00 00`–`60 00 07 43` (964 Byte, 4 Nachrichten) und
+  `60 00 08 00`–`60 00 0E 7F` (896 Byte, 4 Nachrichten). Den Bereich `07 44`–`07 7F`
+  gibt es nicht, er wird übersprungen. Antwortzeit pro Nachricht etwa 35 ms.
+  Status: GETESTET (eigen).
 - Laut Q1 und Q4 sollte vor RQ1 der Edit-Mode aktiv sein (Abschnitt 3).
 
 Status: GETESTET (Q4).
@@ -186,7 +201,7 @@ Auffällig: Q2 sendet für „aktuellen Kanal abfragen“ die Checksumme `FD`
 | `00 00 xx xx` | System (USB-Pegel, globale Einstellungen) | Q1, Q2 `<System>` |
 | `00 01 00 00` | Aktiver Kanal (2 Byte) | Q1, Q2, Q3 |
 | `00 02 00 00` | MIDI-Empfangskanal (`00`–`0F`) | Q1 Z. 116–117 |
-| `10 00 00 00` | Gerätename (16 Byte) | Q3 |
+| `10 00 00 00` | Laut Q3 Gerätename (16 Byte), bei uns Name des Panel-Patches (siehe 2.2) | Q3, eigener Test |
 | `10 01 00 00` … `10 08 00 00` | Namen der Kanäle A1…B4 (je 16 Byte) | Q3, Q4 |
 | `60 00 00 00` … `60 00 0F xx` | **Temporärer Patch** = aktueller Klang. Alle Klangparameter unten liegen hier. | Q2 `<Structure>`, Q3, Q4 |
 | `7F 00 00 01` | Edit-Mode | Q1, Q2 |
@@ -266,6 +281,11 @@ die `06 5x`-Adressen.**
 | Treble | `60 00 06 55` | `00`–`64` = 0–100 | `60 00 00 26` | Q2 `midi.xml:44081`, `:37474`; Q3 `amplifier.yaml:9` | GETESTET (Q4) |
 | Presence | `60 00 06 56` | `00`–`64` = 0–100 | `60 00 00 27` | Q2 `midi.xml:44084`, `:37477` | GETESTET (Q4) |
 
+**Eigener Test (nur lesend):** Im Patch-Dump sind Volume, Bass, Middle, Treble und
+Presence in `00 24`–`00 28` und `06 52`–`06 56` **gleich**. Gain weicht ab:
+`00 22` = `2E` (46), `06 51` = `21` (33). Mit 33/100 → 40/120 passt das auch nicht zur
+Skala `00`–`78`. Der Zusammenhang ist offen.
+
 Die Preamp-Alternativen sind **UNVERIFIZIERT** als Schreibadressen. Q3 widerspricht sich
 bei Gain/Volume selbst (`doc/Adresses.txt` nennt die `00 2x`-Adressen als Schreibziel,
 `amplifier.yaml` die `06 5x`-Adressen). Der Test in Q4 spricht für `06 5x`.
@@ -315,11 +335,17 @@ Jeder Effekt hat drei Speicherplätze, Grün/Rot/Gelb, jeweils mit eigenem Typ.
 | Delay 1 | `60 00 06 3C` | `06 2D` / `06 2E` / `06 2F` | Q2 `midi.xml:43975`; Q3 `delay.yaml:25–28` | GETESTET (Q4) |
 | Reverb/Delay 2 | `60 00 06 3D` | `06 30` / `06 31` / `06 32` | Q2 `midi.xml:43980`; Q3 `reverb.yaml:4–7` | GETESTET (Q4) |
 
-**UNVERIFIZIERT: Bedeutung der Werte.** Q2 `midi.xml:43960ff.` listet
+**GETESTET (eigen): `00` = Grün, `01` = Rot, `02` = Gelb.** Belegt durch den Patch-Dump vom
+2026-11-01 (Abschnitt 10): Bei allen fünf Effekten ist der aktive Typ gleich dem Typ im
+Speicherplatz der gewählten Farbe. Booster Farbe `01` → aktiv `0F` = Rot-Platz `06 25`.
+MOD, FX und Delay Farbe `00` → aktiv = Grün-Platz. Reverb Farbe `01` → aktiv `03` =
+Rot-Platz `06 31` (Grün wäre `04`). `02` = Gelb ist daraus abgeleitet.
+
+Frühere Quellenlage: Q2 `midi.xml:43960ff.` listet
 `00 = RED, 01 = GREEN, 02 = YELLOW`. Q3, Q4 und die Reihenfolge der Farbplätze
 (`06 24` = GREEN, `06 25` = RED, `06 26` = YELLOW, ebenfalls aus Q2) sprechen für
 **`00` = Grün, `01` = Rot, `02` = Gelb**. Q4 nennt das selbst noch offen, bis jemand die
-LED am Gerät vergleicht. → Am Gerät prüfen.
+LED am Gerät vergleicht. Q2 liegt damit falsch.
 
 Der Reverb-Regler kann je Farbe auch Delay 2 steuern: `60 00 06 36`/`37`/`38`
 (Grün/Rot/Gelb) mit `00` Delay, `01` Delay+Reverb, `02` Reverb
@@ -345,7 +371,7 @@ Mit der Checksummen-Rechnung aus 2.5 berechnet.
 | --- | --- |
 | Edit-Mode an | `F0 41 00 00 00 00 33 12 7F 00 00 01 01 7F F7` |
 | Kompletten Patch lesen | `F0 41 00 00 00 00 33 11 60 00 00 00 00 00 0F 00 11 F7` |
-| Gerätename lesen | `F0 41 00 00 00 00 33 11 10 00 00 00 00 00 00 10 60 F7` |
+| Name `10 00 00 00` lesen (siehe 2.2) | `F0 41 00 00 00 00 33 11 10 00 00 00 00 00 00 10 60 F7` |
 | Kanal A1 | `F0 41 00 00 00 00 33 12 00 01 00 00 00 01 7E F7` |
 | AMP-TYPE-Schalter auf Lead | `F0 41 00 00 00 00 33 12 60 00 06 50 03 47 F7` |
 | Amp-Modell Brown | `F0 41 00 00 00 00 33 12 60 00 00 21 17 68 F7` |
@@ -413,7 +439,38 @@ Quelle: Q2 `midi.xml:42864ff.`
 
 ---
 
-## 10. Offene Punkte
+## 10. Eigene Messungen
+
+### 10.1 Mac, Web MIDI, 2026-11-01
+
+- macOS 27.0.1, Chrome 156, BOSS-KATANA-Treiber 1.0.4, Katana über USB-Hub
+  (CalDigit-Dock).
+- `requestMIDIAccess({ sysex: true })` klappt, `sysexEnabled = true`.
+- Identity, Edit-Mode an, RQ1 auf `10 00 00 00`, `00 01 00 00`, `60 00 00 00`,
+  `60 00 06 51`: alle Antworten mit korrekter Checksumme, je etwa 6–20 ms.
+- Aktiver Kanal: Panel (`00 00`).
+
+Werte aus dem Patch-Dump (Panel-Klang, Amp auf Clean), nur gelesen:
+
+| Adresse | Bedeutung | Wert | Passt zu |
+| --- | --- | --- | --- |
+| `60 00 06 50` | AMP-TYPE-Schalter | `01` Clean | `00 21` = `08` Clean (Panel) |
+| `60 00 00 21` | Amp-Modell | `08` Clean (Panel) | – |
+| `60 00 06 5C` | Variation-LED | `00` aus | – |
+| `60 00 06 51` / `00 22` | Gain | `21` (33) / `2E` (46) | weichen ab, siehe 6.2 |
+| `60 00 06 52` / `00 28` | Volume | `1A` / `1A` | gleich |
+| `60 00 06 53`–`56` / `00 24`–`27` | Bass, Middle, Treble, Presence | `27 3A 33 00` / gleich | gleich |
+| `60 00 00 10` / `00 11` | Booster an / Typ | `01` / `0F` Rat | Farbe `01`, Rot-Platz `06 25` = `0F` |
+| `60 00 01 00` / `01 01` | MOD an / Typ | `00` / `15` Tremolo | Farbe `00`, Grün-Platz `06 27` = `15` |
+| `60 00 03 00` / `03 01` | FX an / Typ | `00` / `0A` Slow Gear | Farbe `00`, Grün-Platz `06 2A` = `0A` |
+| `60 00 05 00` / `05 01` | Delay an / Typ | `00` / `06` Reverse | Farbe `00`, Grün-Platz `06 2D` = `06` |
+| `60 00 05 40` / `05 41` | Reverb an / Typ | `01` / `03` Hall 2 | Farbe `01`, Rot-Platz `06 31` = `03` |
+| `60 00 06 57`–`5B` | Effekt-Regler | `0C 00 00 00 2F` | Regler `00` genau bei den Effekten, die aus sind |
+| `60 00 06 36`–`38` | Reverb-Regler-Belegung | `02 02 02` (Reverb) | – |
+
+Noch nicht gesehen: spontane DT1-Meldungen beim Drehen am Amp.
+
+## 11. Offene Punkte
 
 Die Checkliste für den Gerätetest und alle offenen Protokollfragen stehen jetzt in
 [`device-test.md`](device-test.md).

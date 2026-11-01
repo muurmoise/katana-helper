@@ -34,7 +34,7 @@ Nach jedem Test bitte den **kompletten Log** zurückschicken, mit „Log kopiere
 5. [ ] **„2. Verbinden“** tippen. Jeder Schritt meldet „erfolgreich“ oder einen Fehler
        (`open()`, `selectConfiguration`, `claimInterface`, ggf. `selectAlternateInterface`).
 6. [ ] Wenn alles erfolgreich war: **„3. Test-Sequenz senden“** tippen.
-       Am Ende steht eine Zeile „Ergebnis WebUSB: Identity ja/NEIN, Gerätename …“.
+       Am Ende steht eine Zeile „Ergebnis WebUSB: Identity ja/NEIN, Name 10 00 00 00 …“.
 7. [ ] Danach **am Amp den GAIN-Regler drehen** und einen Effekt-Taster drücken.
        Im Log sollten neue Zeilen „USB DT1 …“ erscheinen.
 8. [ ] **„Edit-Mode aus und Gerät freigeben“** tippen.
@@ -52,6 +52,10 @@ Nach jedem Test bitte den **kompletten Log** zurückschicken, mit „Log kopiere
 ---
 
 ## Teil 2 – Mac (Chrome + Web MIDI + BOSS-Treiber)
+
+> **Erledigt am 2026-11-01:** Web MIDI funktioniert (macOS 27.0.1, Chrome 156, Treiber 1.0.4).
+> Ergebnisse in `docs/protocol.md` Abschnitt 10. Offen ist nur noch Schritt 5 (DT1-Meldungen
+> beim Drehen am Amp).
 
 ### Vorbereitung
 
@@ -111,8 +115,8 @@ Diese Punkte brauchen Schreibbefehle und kommen erst, wenn die Verbindung steht.
 
 ### Offene Protokollfragen
 
-- [ ] **Farbwerte:** Ist `00` = Grün oder `00` = Rot? Die Quellen widersprechen sich
-      (`docs/protocol.md` 7.3).
+- [x] **Farbwerte:** Geklärt aus dem Patch-Dump: `00` = Grün, `01` = Rot, `02` = Gelb
+      (`docs/protocol.md` 7.3). Der Schreibtest unten ist nur noch eine Gegenprobe.
       Test: `60 00 06 39` (Booster-Farbe) nacheinander auf `00`, `01`, `02` setzen und
       jedes Mal die LED am Amp ablesen. Danach für MOD/FX/Delay/Reverb (`06 3A`–`06 3D`)
       stichprobenartig wiederholen.
@@ -130,7 +134,7 @@ Diese Punkte brauchen Schreibbefehle und kommen erst, wenn die Verbindung steht.
 - [ ] **Delay 2** an/aus und Typ (`60 00 05 20` / `05 21`), dazu die Reverb-Regler-Belegung
       `60 00 06 36`–`38` (Delay / Delay+Reverb / Reverb).
 - [ ] **Effekt-Regler** `06 57`–`06 5B`: Stimmt die Skala „`00` = aus, `01`–`65` = 0–100“?
-- [ ] **Identity Reply:** Firmware-Version aus der Antwort notieren (siehe
-      `docs/protocol.md` 2.2).
+- [x] **Identity Reply:** `F0 7E 00 06 02 41 33 03 00 00 06 00 00 00 F7`, gleich wie in
+      TuxKatana. Firmware-Version laut Amp-Menü noch gegenprüfen.
 - [ ] Erst ganz am Ende und nur mit Backup: **Speichern** (`7F 00 01 04`) auf einem
       unwichtigen Kanal.

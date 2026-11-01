@@ -13,7 +13,7 @@ immer quoten.
 
 | Plattform | Weg | Status |
 | --- | --- | --- |
-| Mac/Desktop | Chrome + **Web MIDI** + BOSS-KATANA-Treiber | erwartet: funktioniert, Test ausstehend |
+| Mac/Desktop | Chrome + **Web MIDI** + BOSS-KATANA-Treiber | **funktioniert** (getestet 2026-11-01, macOS 27, Chrome 156, Treiber 1.0.4) |
 | Android | Chrome + **WebUSB** (Interface selbst beanspruchen, USB-MIDI-Pakete selbst packen) | offen → Phase 1a |
 | ~~iPad~~ | gestrichen: herstellerspezifisches USB, kein Treiber, kein WebUSB in Safari | – |
 
@@ -29,6 +29,7 @@ nicht. Details: `docs/protocol.md` Abschnitt 1.
 - Bibliotheken `src/lib/sysex.js` (Checksumme, RQ1/DT1 bauen, parsen) und
   `src/lib/usbmidi.js` (USB-MIDI-Pakete packen/entpacken), beide mit Vitest-Tests.
 - Martin testet nach `docs/device-test.md` auf Android und Mac und schickt die Logs.
+  Mac: erledigt (2026-11-01, Web MIDI klappt). Android: ausstehend.
 
 ### Entscheidung nach dem Test
 

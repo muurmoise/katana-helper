@@ -16,7 +16,9 @@ export const IDENTITY_REQUEST = [0xf0, 0x7e, 0x00, 0x06, 0x01, 0xf7];
 /** Addresses used by the probe and phase 1 (see docs/protocol.md). */
 export const ADDR = {
   EDIT_MODE: [0x7f, 0x00, 0x00, 0x01],
-  DEVICE_NAME: [0x10, 0x00, 0x00, 0x00],
+  // Sources call this the device name. On our amp it returned the patch name, so it is
+  // probably the stored Panel patch (A1–B4 follow at 10 01 … 10 08). See docs/protocol.md 2.2.
+  PANEL_NAME: [0x10, 0x00, 0x00, 0x00],
   ACTIVE_CHANNEL: [0x00, 0x01, 0x00, 0x00],
   PATCH: [0x60, 0x00, 0x00, 0x00],
   PATCH_NAME: [0x60, 0x00, 0x00, 0x00],

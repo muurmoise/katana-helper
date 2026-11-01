@@ -125,7 +125,7 @@ function setStatus(id, text, bad = false) {
 // ---------------------------------------------------------------- incoming messages
 
 const KNOWN = [
-  { addr: ADDR.DEVICE_NAME, name: 'Gerätename', show: (d) => `"${ascii(d).trimEnd()}"` },
+  { addr: ADDR.PANEL_NAME, name: 'Name 10 00 00 00 (Panel-Speicher?)', show: (d) => `"${ascii(d).trimEnd()}"` },
   { addr: ADDR.ACTIVE_CHANNEL, name: 'Aktiver Kanal', show: showChannel },
   { addr: ADDR.PATCH_NAME, name: 'Patch-Anfang (Name)', show: (d) => `"${ascii(d.slice(0, 16)).trimEnd()}"` },
   { addr: ADDR.AMP_TYPE_KNOB, name: 'AMP-TYPE-Schalter', show: (d) => ['Acoustic', 'Clean', 'Crunch', 'Lead', 'Brown'][d[0]] ?? d[0] },
@@ -211,7 +211,7 @@ async function runSequence(send, label) {
   await send(buildEditMode(true));
   await sleep(150);
 
-  results.push(['Gerätename', await request(send, 'Gerätename', ADDR.DEVICE_NAME, 16)]);
+  results.push(['Name 10 00 00 00', await request(send, 'Name 10 00 00 00', ADDR.PANEL_NAME, 16)]);
   results.push(['Aktiver Kanal', await request(send, 'Aktiver Kanal', ADDR.ACTIVE_CHANNEL, 2)]);
   results.push(['Patch-Name', await request(send, 'Patch-Name', ADDR.PATCH_NAME, 16)]);
   results.push(['Gain', await request(send, 'Gain', ADDR.GAIN, 1)]);

@@ -53,8 +53,8 @@ describe('builders', () => {
     expect(hex(buildEditMode(false))).toBe('F0 41 00 00 00 00 33 12 7F 00 00 01 00 00 F7');
   });
 
-  it('builds RQ1 for the device name (TuxKatana trace)', () => {
-    expect(hex(buildRQ1(ADDR.DEVICE_NAME, 16))).toBe(
+  it('builds RQ1 for the name at 10 00 00 00 (TuxKatana trace)', () => {
+    expect(hex(buildRQ1(ADDR.PANEL_NAME, 16))).toBe(
       'F0 41 00 00 00 00 33 11 10 00 00 00 00 00 00 10 60 F7',
     );
   });
@@ -86,15 +86,31 @@ describe('builders', () => {
 });
 
 describe('parseSysex', () => {
-  it('parses the device name reply from TuxKatana', () => {
+  it('parses the 10 00 00 00 name reply from TuxKatana', () => {
     const reply = parseHex(
       'F0 41 00 00 00 00 33 12 10 00 00 00 4B 41 54 41 4E 41 20 4D 6B 32 20 20 20 20 20 20 76 F7',
     );
     const msg = parseSysex(reply);
     expect(msg.kind).toBe('dt1');
-    expect(msg.address).toEqual(ADDR.DEVICE_NAME);
+    expect(msg.address).toEqual(ADDR.PANEL_NAME);
     expect(msg.checksumOk).toBe(true);
     expect(ascii(msg.data).trim()).toBe('KATANA Mk2');
+  });
+
+  it('parses replies recorded on our own amp (Mac, Web MIDI, 2026-11-01)', () => {
+    const name = parseSysex(
+      parseHex('F0 41 00 00 00 00 33 12 10 00 00 00 6D 75 75 72 20 7A 75 73 61 6D 73 74 72 61 3F 65 79 F7'),
+    );
+    expect(name.checksumOk).toBe(true);
+    expect(ascii(name.data)).toBe('muur zusamstra?e');
+
+    const gain = parseSysex(parseHex('F0 41 00 00 00 00 33 12 60 00 06 51 21 28 F7'));
+    expect(gain.address).toEqual(ADDR.GAIN);
+    expect(gain.data).toEqual([0x21]);
+    expect(gain.checksumOk).toBe(true);
+
+    const id = parseSysex(parseHex('F0 7E 00 06 02 41 33 03 00 00 06 00 00 00 F7'));
+    expect(id.kind).toBe('identity-reply');
   });
 
   it('flags a wrong checksum', () => {
