@@ -131,7 +131,29 @@ const KNOWN = [
   { addr: ADDR.AMP_TYPE_KNOB, name: 'AMP-TYPE-Schalter', show: (d) => ['Acoustic', 'Clean', 'Crunch', 'Lead', 'Brown'][d[0]] ?? d[0] },
   { addr: ADDR.GAIN, name: 'Gain', show: (d) => `${d[0]} (0–100)` },
   { addr: ADDR.EDIT_MODE, name: 'Edit-Mode', show: (d) => (d[0] ? 'an' : 'aus') },
+  ...panel(0x52, 'Volume'), ...panel(0x53, 'Bass'), ...panel(0x54, 'Middle'),
+  ...panel(0x55, 'Treble'), ...panel(0x56, 'Presence'),
+  ...panel(0x57, 'Booster-Regler'), ...panel(0x58, 'MOD-Regler'), ...panel(0x59, 'FX-Regler'),
+  ...panel(0x5a, 'Delay-Regler'), ...panel(0x5b, 'Reverb-Regler'),
+  ...led(0x5c, 'Variation'), ...led(0x5d, 'Booster'), ...led(0x5e, 'MOD'), ...led(0x5f, 'FX'),
+  ...led(0x60, 'Delay'), ...led(0x61, 'Reverb'),
+  ...onOff([0x00, 0x10], 'Booster'), ...onOff([0x01, 0x00], 'MOD'), ...onOff([0x03, 0x00], 'FX'),
+  ...onOff([0x05, 0x00], 'Delay'), ...onOff([0x05, 0x40], 'Reverb'),
+  { addr: [0x60, 0x00, 0x00, 0x22], name: 'Preamp-Gain', show: (d) => `${d[0]}` },
+  { addr: [0x60, 0x00, 0x05, 0x02], name: 'Delay-Zeit', show: (d) => (d.length === 2 ? `${d[0] * 128 + d[1]} ms` : hex(d)) },
 ];
+
+function panel(lo, name) {
+  return [{ addr: [0x60, 0x00, 0x06, lo], name, show: (d) => `${d[0]}` }];
+}
+
+function led(lo, name) {
+  return [{ addr: [0x60, 0x00, 0x06, lo], name: `LED ${name}`, show: (d) => (d[0] ? 'an' : 'aus') }];
+}
+
+function onOff([hi, lo], name) {
+  return [{ addr: [0x60, 0x00, hi, lo], name: `${name} an/aus`, show: (d) => (d[0] ? 'an' : 'aus') }];
+}
 
 function showChannel(d) {
   const v = d.length >= 2 ? d[1] : d[0];
@@ -167,11 +189,16 @@ function handleIncoming(source, bytes, incomplete = false) {
   } else if (msg.kind === 'dt1') {
     const known = KNOWN.find((k) => sameAddress(k.addr, msg.address));
     const label = known ? `${known.name} = ${known.show(msg.data)}` : `${msg.data.length} Datenbytes`;
-    log('in', `${source} DT1 ${hex(msg.address)}: ${label}`);
-    log('in', `  ${hex(bytes)}`);
-    log(msg.checksumOk ? 'ok' : 'err', msg.checksumOk
-      ? `  Checksumme ${hex([msg.checksum])} korrekt`
-      : `  Checksumme FALSCH: erhalten ${hex([msg.checksum])}, erwartet ${hex([msg.expectedChecksum])}`);
+    if (msg.checksumOk && msg.data.length <= 16) {
+      // Short messages (knob turns, switches) on one line to keep the log small.
+      log('in', `${source} DT1 ${hex(msg.address)} [${hex(msg.data)}] ${label} ✓`);
+    } else {
+      log('in', `${source} DT1 ${hex(msg.address)}: ${label}`);
+      log('in', `  ${hex(bytes)}`);
+      log(msg.checksumOk ? 'ok' : 'err', msg.checksumOk
+        ? `  Checksumme ${hex([msg.checksum])} korrekt`
+        : `  Checksumme FALSCH: erhalten ${hex([msg.checksum])}, erwartet ${hex([msg.expectedChecksum])}`);
+    }
     if (collector) collector.push(msg);
   } else {
     log('in', `${source} ${msg.kind}${msg.reason ? ` (${msg.reason})` : ''}: ${hex(bytes)}`);

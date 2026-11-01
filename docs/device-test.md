@@ -54,8 +54,7 @@ Nach jedem Test bitte den **kompletten Log** zurückschicken, mit „Log kopiere
 ## Teil 2 – Mac (Chrome + Web MIDI + BOSS-Treiber)
 
 > **Erledigt am 2026-11-01:** Web MIDI funktioniert (macOS 27.0.1, Chrome 156, Treiber 1.0.4).
-> Ergebnisse in `docs/protocol.md` Abschnitt 10. Offen ist nur noch Schritt 5 (DT1-Meldungen
-> beim Drehen am Amp).
+> Ergebnisse in `docs/protocol.md` Abschnitt 10, auch die Meldungen beim Drehen am Amp.
 
 ### Vorbereitung
 
@@ -92,7 +91,8 @@ Nach jedem Test bitte den **kompletten Log** zurückschicken, mit „Log kopiere
 8. [ ] Optional: **WebUSB → „1. Gerät wählen“ → „2. Verbinden“**. Erwartung: Mit
        installiertem Treiber schlägt `claimInterface` fehl, weil der Treiber das Gerät
        hält. Das Ergebnis interessiert trotzdem.
-9. [ ] **„Log kopieren“** und den kompletten Log schicken.
+9. [ ] **„Als Datei“** speichern (landet in „Downloads“) oder „Log kopieren“. Lange Logs
+       werden beim Einfügen in den Chat abgeschnitten, dann besser die Datei nehmen.
 
 ### Zurückschicken
 
@@ -115,8 +115,9 @@ Diese Punkte brauchen Schreibbefehle und kommen erst, wenn die Verbindung steht.
 
 ### Offene Protokollfragen
 
-- [x] **Farbwerte:** Geklärt aus dem Patch-Dump: `00` = Grün, `01` = Rot, `02` = Gelb
-      (`docs/protocol.md` 7.3). Der Schreibtest unten ist nur noch eine Gegenprobe.
+- [x] **Farbwerte:** Geklärt aus dem Patch-Dump und am Gerät bestätigt (Booster- und
+      Reverb-LED rot bei Wert `01`): `00` = Grün, `01` = Rot, `02` = Gelb
+      (`docs/protocol.md` 7.3). Der Schreibtest unten ist optional.
       Test: `60 00 06 39` (Booster-Farbe) nacheinander auf `00`, `01`, `02` setzen und
       jedes Mal die LED am Amp ablesen. Danach für MOD/FX/Delay/Reverb (`06 3A`–`06 3D`)
       stichprobenartig wiederholen.

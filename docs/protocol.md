@@ -283,8 +283,15 @@ die `06 5x`-Adressen.**
 
 **Eigener Test (nur lesend):** Im Patch-Dump sind Volume, Bass, Middle, Treble und
 Presence in `00 24`–`00 28` und `06 52`–`06 56` **gleich**. Gain weicht ab:
-`00 22` = `2E` (46), `06 51` = `21` (33). Mit 33/100 → 40/120 passt das auch nicht zur
-Skala `00`–`78`. Der Zusammenhang ist offen.
+`00 22` = `2E` (46), `06 51` = `21` (33).
+
+Beim Drehen am GAIN-Regler meldet der Amp **beide** Adressen, immer zuerst `00 22`, dann
+`06 51` (etwa alle 22 ms). Im Ruhezustand gilt bei Amp-Typ Clean ungefähr
+**`00 22` ≈ 0,8 × `06 51` + 20** (gemessen: 19 → 35, 33 → 46, 51 → 61, 70 → 76). Beim
+schnellen Drehen hinkt `00 22` etwas hinterher, als würde es geglättet. Deutung:
+`06 51` ist die Reglerstellung, `00 22` der daraus berechnete interne Gain-Wert. Ob die
+Formel bei anderen Amp-Typen gleich ist: UNVERIFIZIERT. Für katana-helper bleibt
+`06 51` die richtige Adresse (GETESTET (eigen), lesend).
 
 Die Preamp-Alternativen sind **UNVERIFIZIERT** als Schreibadressen. Q3 widerspricht sich
 bei Gain/Volume selbst (`doc/Adresses.txt` nennt die `00 2x`-Adressen als Schreibziel,
@@ -341,6 +348,9 @@ Speicherplatz der gewählten Farbe. Booster Farbe `01` → aktiv `0F` = Rot-Plat
 MOD, FX und Delay Farbe `00` → aktiv = Grün-Platz. Reverb Farbe `01` → aktiv `03` =
 Rot-Platz `06 31` (Grün wäre `04`). `02` = Gelb ist daraus abgeleitet.
 
+Gegenprobe am Gerät: Die LEDs von Booster (Farbe `01`) und Reverb (Farbe `01`) leuchten
+rot. Damit ist die Zuordnung bestätigt.
+
 Frühere Quellenlage: Q2 `midi.xml:43960ff.` listet
 `00 = RED, 01 = GREEN, 02 = YELLOW`. Q3, Q4 und die Reihenfolge der Farbplätze
 (`06 24` = GREEN, `06 25` = RED, `06 26` = YELLOW, ebenfalls aus Q2) sprechen für
@@ -360,6 +370,25 @@ Der Reverb-Regler kann je Farbe auch Delay 2 steuern: `60 00 06 36`/`37`/`38`
 | FX | `60 00 06 59` | wie oben | Q2 `midi.xml:44095` | GETESTET (Q4) |
 | Delay | `60 00 06 5A` | wie oben; laut Q4 Mischung beider Delays | Q2 `midi.xml:44099` | GETESTET (Q4) |
 | Reverb | `60 00 06 5B` | wie oben | Q2 `midi.xml:44103`, Q3 `reverb.yaml` | GETESTET (Q4) |
+
+**Eigener Test:** Dreht man den MOD-Regler aus der Stellung `00` (MOD aus), meldet der Amp
+nacheinander `01 00` = `01` (MOD an), `06 5E` = `01` (MOD-LED an) und dann laufend
+`06 58` (Reglerstellung) zusammen mit `02 14`. Bei MOD-Typ Tremolo ist `02 14` laut Q2
+„MOD TR: Rate“: Der Regler steuert also den Hauptparameter des aktiven Typs mit.
+Status: GETESTET (eigen), lesend.
+
+### 7.5 LED-Zustände (nur lesen)
+
+| LED | Adresse | Werte | Quelle | Status |
+| --- | --- | --- | --- | --- |
+| Variation | `60 00 06 5C` | `00` aus, `01` an | Q2 `midi.xml` (Panel `5C`) | GETESTET (Q4) |
+| Booster | `60 00 06 5D` | wie oben | Q2 (Panel `5D`) | QUELLEN |
+| MOD | `60 00 06 5E` | wie oben | Q2 (Panel `5E`) | GETESTET (eigen) |
+| FX | `60 00 06 5F` | wie oben | Q2 (Panel `5F`) | QUELLEN |
+| Delay 1 | `60 00 06 60` | wie oben | Q2 (Panel `60`) | QUELLEN |
+| Reverb/Delay 2 | `60 00 06 61` | wie oben | Q2 (Panel `61`) | QUELLEN |
+
+Status QUELLEN heißt hier: nur Q2, aber dieselbe Tabelle wie die bestätigte MOD-LED.
 
 ---
 
@@ -468,7 +497,19 @@ Werte aus dem Patch-Dump (Panel-Klang, Amp auf Clean), nur gelesen:
 | `60 00 06 57`–`5B` | Effekt-Regler | `0C 00 00 00 2F` | Regler `00` genau bei den Effekten, die aus sind |
 | `60 00 06 36`–`38` | Reverb-Regler-Belegung | `02 02 02` (Reverb) | – |
 
-Noch nicht gesehen: spontane DT1-Meldungen beim Drehen am Amp.
+### 10.2 Mac, Meldungen vom Amp, 2026-11-01
+
+Mit Edit-Mode an schickt der Amp Änderungen am Bedienfeld von sich aus als DT1, ohne
+Anfrage:
+
+| Aktion am Amp | Meldungen | Takt |
+| --- | --- | --- |
+| GAIN drehen | `60 00 00 22` (Preamp-Gain), dann `60 00 06 51` (Regler) | etwa 22 ms je Paar |
+| MOD-Regler aus `00` hochdrehen | `60 00 01 00` = `01`, `60 00 06 58`, `60 00 06 5E` = `01`, dann laufend `06 58` + `02 14` (Tremolo Rate) | etwa 22 ms |
+| vermutlich TAP gedrückt | `60 00 05 02` = `01 75`: Delay-1-Zeit, 2 Byte, 128er-Stellen → 245 ms (Q2: „DD1: Time“) | einmalig |
+
+Alle Checksummen korrekt. Der eingefügte Log war nach 11:23:37 abgeschnitten
+(Längenlimit beim Einfügen); weitere Aktionen danach sind nicht ausgewertet.
 
 ## 11. Offene Punkte
 
