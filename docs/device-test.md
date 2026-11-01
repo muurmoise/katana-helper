@@ -64,11 +64,14 @@ Nach jedem Test bitte den **kompletten Log** zurückschicken, mit „Log kopiere
         Treiberseite. Bitte vor der Installation nachsehen.
       - Nach der Installation die Systemerweiterung erlauben (Systemeinstellungen →
         Datenschutz & Sicherheit) und den Mac neu starten, falls verlangt.
-- [ ] Katana einschalten und per USB (USB-B) an den Mac anschließen.
+- [ ] Katana einschalten und per USB (USB-B) an den Mac anschließen. Ein USB-Hub oder Dock
+      (z. B. CalDigit) ist in Ordnung. Am Mac getestet: Der Katana erscheint am Hub, und
+      CoreMIDI legt die Ports „KATANA“ und „KATANA DAW CTRL“ an.
 - [ ] Optional: In „Audio-MIDI-Setup“ → Fenster → MIDI-Studio nachsehen, ob „KATANA“
       erscheint.
 - [ ] **BOSS Tone Studio schließen.** Es schaltet selbst den Edit-Mode und würde stören.
-- [ ] Google Chrome (aktuelle Version).
+- [ ] **Google Chrome** (aktuelle Version), **nicht Safari**. Safari kennt weder Web MIDI
+      noch WebUSB. Dann bleiben „Web MIDI öffnen“ und die Felder Eingang/Ausgang gesperrt.
 
 ### Ablauf
 
@@ -76,8 +79,8 @@ Nach jedem Test bitte den **kompletten Log** zurückschicken, mit „Log kopiere
 2. [ ] **Web MIDI → „1. Web MIDI öffnen“**. Chrome fragt nach der Berechtigung,
        MIDI-Geräte zu steuern → **Zulassen**.
 3. [ ] Im Log: Liste der Ein- und Ausgänge, idealerweise „Katana-Port gefunden“.
-       Die Auswahlfelder stehen dann automatisch auf KATANA. Sonst den richtigen Port
-       von Hand wählen.
+       Die Auswahlfelder werden erst nach Schritt 2 wählbar und stehen dann automatisch
+       auf „KATANA“ (nicht „KATANA DAW CTRL“). Sonst den Port von Hand wählen.
 4. [ ] **„2. Test-Sequenz senden“**. Am Ende steht „Ergebnis Web MIDI: …“.
 5. [ ] **Am Amp den GAIN-Regler drehen** → es sollten „MIDI DT1 …“-Zeilen kommen.
 6. [ ] **„Patch auslesen (Backup)“** einmal ausprobieren (nur lesend).

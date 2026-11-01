@@ -104,8 +104,22 @@ function showEnvironment() {
     dl.append(dt, dd);
     log('info', `${k}: ${v}`);
   }
-  if (!hasUsb) $('usb-choose').disabled = true;
-  if (!hasMidi) $('midi-open').disabled = true;
+  const noApi = 'Dieser Browser kann das nicht (Safari und Firefox fehlt es). Bitte die Seite in Google Chrome öffnen.';
+  if (!hasUsb) {
+    $('usb-choose').disabled = true;
+    setStatus('usb-status', `WebUSB fehlt. ${noApi}`, true);
+  }
+  if (!hasMidi) {
+    $('midi-open').disabled = true;
+    setStatus('midi-status', `Web MIDI fehlt. ${noApi}`, true);
+  }
+}
+
+function setStatus(id, text, bad = false) {
+  const el = $(id);
+  el.textContent = text;
+  el.hidden = false;
+  el.className = bad ? 'hint no' : 'hint';
 }
 
 // ---------------------------------------------------------------- incoming messages
@@ -468,7 +482,10 @@ function fillSelect(select, ports) {
     opt.textContent = p.name;
     select.append(opt);
   }
-  const katana = ports.find((p) => /katana/i.test(p.name));
+  // Prefer the main port over "KATANA DAW CTRL", which carries no SysEx.
+  const katana =
+    ports.find((p) => /katana/i.test(p.name) && !/daw/i.test(p.name)) ??
+    ports.find((p) => /katana/i.test(p.name));
   if (katana) select.value = katana.id;
   select.disabled = ports.length === 0;
 }
@@ -501,6 +518,13 @@ function listPorts() {
   for (const p of outs) log('info', `  OUT ${portLabel(p)}`);
   const found = [...ins, ...outs].some((p) => /katana/i.test(p.name));
   log(found ? 'ok' : 'warn', found ? 'Katana-Port gefunden' : 'Kein Port mit "KATANA" im Namen gefunden');
+  if (ins.length === 0 && outs.length === 0) {
+    setStatus('midi-status', 'Keine MIDI-Ports gefunden. Treiber installiert? Amp an und per USB verbunden?', true);
+  } else if (!found) {
+    setStatus('midi-status', 'Kein Katana-Port dabei. Bitte Eingang und Ausgang von Hand wählen.', true);
+  } else {
+    setStatus('midi-status', 'Katana gefunden. Weiter mit „2. Test-Sequenz senden“.');
+  }
   fillSelect($('midi-in'), ins);
   fillSelect($('midi-out'), outs);
   bindPorts();
@@ -518,6 +542,11 @@ $('midi-open').onclick = async () => {
     listPorts();
   } catch (e) {
     log('err', `requestMIDIAccess: ${errorText(e)}`);
+    setStatus(
+      'midi-status',
+      'Zugriff verweigert. In Chrome links in der Adressleiste auf das Symbol tippen und „MIDI-Geräte steuern“ erlauben, dann Seite neu laden.',
+      true,
+    );
   }
 };
 
