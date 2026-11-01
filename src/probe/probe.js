@@ -14,6 +14,7 @@ import {
 } from '../lib/sysex.js';
 import { packSysex, UsbMidiReceiver } from '../lib/usbmidi.js';
 import { describe } from '../lib/describe.js';
+import { SYSTEM_ADDR, airFeelMessage, airFeelName, airFeelRequest } from '../lib/system.js';
 
 const ROLAND_VENDOR_ID = 0x0582;
 const $ = (id) => document.getElementById(id);
@@ -553,6 +554,91 @@ $('midi-editoff').onclick = () =>
     log('out', `Edit-Mode aus: ${hex(buildEditMode(false))}`);
     await midiSend(buildEditMode(false));
   });
+
+// ---------------------------------------------------------------- Air Feel (system, global)
+
+const airFeel = { original: null };
+
+/** The port opened above: Web MIDI first, otherwise WebUSB. */
+function activeSend() {
+  if (midi.output) return { send: midiSend, via: 'Web MIDI' };
+  if (usb.receiving) return { send: usbSend, via: 'WebUSB' };
+  return null;
+}
+
+function showAirFeelOriginal() {
+  $('af-status').textContent = `Ursprünglicher Wert: ${airFeel.original ?? 'noch nicht gelesen'}`;
+  $('af-restore').disabled = !airFeel.original;
+}
+
+async function airFeelRead({ send, via }) {
+  const rq = airFeelRequest();
+  log('out', `${via} RQ1 Line Out Air Feel: ${hex(rq)}`);
+  await send(rq);
+  const reply = await waitFor(isReplyTo(SYSTEM_ADDR.AIR_FEEL), 1500);
+  if (!reply) {
+    log('err', '  keine Antwort nach 1500 ms');
+    return null;
+  }
+  const byte = reply.data[0];
+  const name = airFeelName(byte);
+  log(name ? 'ok' : 'warn', `  Antwort ${hex(reply.bytes)} → Air Feel = ${name ?? 'unbekannt'} (${hex([byte])})`);
+  if (!airFeel.original && name) {
+    airFeel.original = name;
+    log('info', `  Ursprünglicher Wert gemerkt: ${name}`);
+    showAirFeelOriginal();
+  }
+  return name;
+}
+
+async function airFeelSet(port, name) {
+  // Remember the value before the first write, so it can be restored.
+  if (!airFeel.original && !(await airFeelRead(port))) {
+    log('err', 'Air Feel: Ausgangswert unbekannt, schreibe nicht');
+    return false;
+  }
+  if ($('af-edit').checked) {
+    log('out', `${port.via} Edit-Mode an: ${hex(buildEditMode(true))}`);
+    await port.send(buildEditMode(true));
+    await sleep(150);
+  }
+  const dt = airFeelMessage(name);
+  log('out', `${port.via} DT1 Line Out Air Feel = ${name}: ${hex(dt)}`);
+  await port.send(dt);
+  await sleep(300);
+  const got = await airFeelRead(port);
+  const ok = got === name;
+  log(ok ? 'ok' : 'err', ok ? `Bestätigt: Air Feel = ${name}` : `ABWEICHUNG: gesetzt ${name}, gelesen ${got ?? 'nichts'}`);
+  return ok;
+}
+
+function airFeelButton(id, name, fn) {
+  $(id).onclick = () =>
+    guarded(name, async () => {
+      const port = activeSend();
+      if (!port) {
+        log('err', `${name}: erst oben Web MIDI öffnen oder WebUSB verbinden`);
+        return;
+      }
+      log('info', `===== ${name} über ${port.via} =====`);
+      await fn(port);
+    });
+}
+
+airFeelButton('af-read', 'Air Feel lesen', (port) => airFeelRead(port));
+for (const name of ['REC', 'LIVE', 'BLEND']) {
+  airFeelButton(`af-${name.toLowerCase()}`, `Air Feel ${name} setzen`, (port) => airFeelSet(port, name));
+}
+airFeelButton('af-all', 'Air Feel: alle drei nacheinander', async (port) => {
+  const results = [];
+  for (const name of ['REC', 'LIVE', 'BLEND']) {
+    results.push(`${name} ${(await airFeelSet(port, name)) ? 'ja' : 'NEIN'}`);
+    await sleep(500);
+  }
+  if (airFeel.original) await airFeelSet(port, airFeel.original);
+  log('info', `Ergebnis Air Feel: ${results.join(', ')}; zurück auf ${airFeel.original ?? '–'}`);
+});
+airFeelButton('af-restore', 'Air Feel zurück', (port) => airFeelSet(port, airFeel.original));
 
 // ---------------------------------------------------------------- start
 

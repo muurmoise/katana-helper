@@ -21,6 +21,9 @@ Zielkanal automatisch. Die Diagnose-Seite liegt unter
 Phase 5 (PWA): katana-helper lässt sich in Chrome als App installieren und startet auch ohne
 Internet. Neue Versionen kommen nur nach Klick auf „Aktualisieren“.
 
+System (global): Schalter „Line Out: REC | LIVE | BLEND“ (Air Feel). Gilt für alle Kanäle
+und nur für Line Out, Kopfhörer und USB, nicht für den Lautsprecher.
+
 Roadmap: [CLAUDE.md](CLAUDE.md) · MIDI-Protokoll: [docs/protocol.md](docs/protocol.md) ·
 Quellen: [CREDITS.md](CREDITS.md)
 

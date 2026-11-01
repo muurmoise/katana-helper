@@ -152,6 +152,27 @@ Regeln im Code:
 - Bei nicht zurückgenommenen Änderungen fragt „Aktualisieren“ nach. Während einer
   Patch-Aktion (`manager.busy`) wird nicht neu geladen.
 
+### Zusatz – System (global): Line Out Air Feel ← umgesetzt, Hörtest am Amp durch Martin ausstehend
+
+Eingeschoben am 2026-11-01. Segment-Schalter „Line Out: REC | LIVE | BLEND“ in eigener Karte
+„System (global)“ außerhalb des Patch-Editors. Abschnitt „Air Feel“ auf der Diagnose-Seite.
+
+| Datei | Aufgabe |
+| --- | --- |
+| `src/lib/system.js` | `SYSTEM_ADDR`, `AIR_FEEL` (REC `00`, LIVE `01`, BLEND `02`), `readAirFeel`/`setAirFeel(client, …)`, `SystemSettings` (lesen beim Verbinden, schreiben, zurücklesen, bei Fehler alten Wert zurückschreiben) |
+| `src/app/system-ui.js` | Karte „System (global)“ |
+
+Regeln im Code:
+- System = `00 00 xx xx`, Air Feel = `00 00 00 29` (Q2, `docs/protocol.md` 12). Gilt für alle
+  Kanäle, ist nicht Teil von Patch, Backup, Bibliothek oder „Änderungen zurücknehmen“.
+- Schreiben ist ein einfaches DT1 ohne Speicherbefehl. Laut Q2 bleibt der Wert gespeichert;
+  geprüft wird das in `docs/device-test.md` Teil 7.
+- Ist Line Out Custom (`00 00 01 10`) an, wirkt Air Feel nicht. Die Karte zeigt dann einen
+  Hinweis. Custom-Mic-Regler sind bewusst noch nicht im Editor.
+
+Offen: Martins Hörtest nach `docs/device-test.md` Teil 7, danach Status in
+`docs/protocol.md` 12 nachtragen.
+
 ## Konventionen
 
 - `docs/protocol.md` ist die verbindliche Referenz für alle SysEx-Adressen. Neue oder geänderte

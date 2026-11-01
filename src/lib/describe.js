@@ -4,6 +4,7 @@
 
 import { allEffectParams, decodeValue, formatValue } from './effect-params.js';
 import { hex } from './sysex.js';
+import { AIR_FEEL_NAMES, SYSTEM_ADDR } from './system.js';
 
 const ampModels = {
   0x01: 'Acoustic (Panel)', 0x08: 'Clean (Panel)', 0x0b: 'Crunch (Panel)', 0x18: 'Lead (Panel)',
@@ -78,6 +79,9 @@ function field(address, label, size, format) {
 
 field([0x7f, 0, 0, 0x01], 'Edit-Mode', 1, onOff);
 field([0x00, 0x01, 0, 0], 'Aktiver Kanal', 2, channel);
+// Global system settings (docs/protocol.md 12), not part of a patch.
+field(SYSTEM_ADDR.AIR_FEEL, 'System: Line Out Air Feel', 1, pick(AIR_FEEL_NAMES));
+field(SYSTEM_ADDR.LINE_OUT_CUSTOM, 'System: Line Out Custom', 1, onOff);
 field([0x10, 0, 0, 0], 'Name Panel-Speicher', 16, name);
 for (let i = 1; i <= 8; i++) field([0x10, i, 0, 0], `Name ${CHANNEL_NAMES[i]}`, 16, name);
 

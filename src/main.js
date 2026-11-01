@@ -3,6 +3,7 @@
 import { mountEditor } from './app/editor-ui.js';
 import { mountLog } from './app/log-ui.js';
 import { mountPatches } from './app/patches-ui.js';
+import { mountSystem } from './app/system-ui.js';
 import { Connection } from './lib/connection.js';
 import { CHANNEL_NAMES } from './lib/describe.js';
 import { Editor } from './lib/editor.js';
@@ -11,6 +12,7 @@ import { PatchManager } from './lib/manager.js';
 import { Logger } from './lib/log.js';
 import { WebMidiTransport, midiPermission } from './lib/midi-transport.js';
 import { hex } from './lib/sysex.js';
+import { SystemSettings } from './lib/system.js';
 import { isInstalled, registerServiceWorker, watchInstall } from './pwa/register.js';
 
 const $ = (id) => document.getElementById(id);
@@ -18,6 +20,7 @@ const $ = (id) => document.getElementById(id);
 const logger = new Logger();
 const connection = new Connection({ transport: new WebMidiTransport(), logger });
 const editor = new Editor(connection);
+const system = new SystemSettings(connection);
 
 // IndexedDB keeps the library across reloads. Without it (blocked storage) the library
 // still works, but only until the page is reloaded.
@@ -173,6 +176,7 @@ if (import.meta.env.PROD) {
 mountLog(logger);
 mountEditor(editor, connection);
 mountPatches({ manager, library, editor, connection });
+mountSystem(system, connection);
 logger.add('info', `katana-helper ${VERSION}${isInstalled() ? ' (als App)' : ''}, Browser: ${navigator.userAgent}`);
 render();
 

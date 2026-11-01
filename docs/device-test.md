@@ -3,7 +3,8 @@
 Testseite: <https://muurmoise.github.io/katana-helper/probe/>
 
 Die Testseite sendet nur **Lesebefehle** (RQ1), die Geräteabfrage (Identity Request) und den
-Edit-Mode an/aus. Sie verändert und speichert nichts am Amp.
+Edit-Mode an/aus. Sie verändert und speichert nichts am Amp. Ausnahme: Die Knöpfe im
+Abschnitt „Air Feel“ schreiben die globale Air-Feel-Einstellung (Teil 7).
 
 Nach jedem Test bitte den **kompletten Log** zurückschicken, mit „Log kopieren“ oder
 „Als Datei“. Bitte nichts kürzen, auch die Fehlerzeilen sind wichtig.
@@ -160,6 +161,8 @@ Editor: <https://muurmoise.github.io/katana-helper/>, Google Chrome, Amp per USB
 - [ ] **Effekt-Regler** `06 57`–`06 5B`: Stimmt die Skala „`00` = aus, `01`–`65` = 0–100“?
       Jetzt im Editor („Regler am Amp“), siehe Teil 5.
 - [ ] **Speichern** (`7F 00 01 04`): siehe Teil 4.
+- [ ] **System-Bereich** (`00 00 xx xx`): Wirkt Air Feel, und bleibt es nach dem Ausschalten?
+      Siehe Teil 7.
 
 ---
 
@@ -246,3 +249,62 @@ Offen ist die echte Installation.
        verfügbar“. „Aktualisieren“ klicken: Die Seite lädt neu, die Versionsnummer unten
        ist neu.
 6. [ ] Bibliothek prüfen: Sind die Patches in der App dieselben wie im Browser-Tab?
+
+---
+
+## Teil 7 – Line Out Air Feel (System, global)
+
+Air Feel steht an `00 00 00 29` (`docs/protocol.md` 12). Getestet sind bisher zwei Dinge:
+Das Lesen klappt, und das Zurückschreiben des schon eingestellten Werts REC wird bestätigt.
+Offen sind drei Fragen:
+- Klingen REC, LIVE und BLEND verschieden?
+- Stimmt die Zuordnung `00` REC, `01` LIVE, `02` BLEND?
+- Bleibt die Einstellung nach dem Ausschalten erhalten?
+
+Air Feel gilt **für alle Kanäle** und steht in keinem Patch. „Änderungen zurücknehmen“ und
+Patch-Backups setzen es nicht zurück. Notiere dir darum zuerst den Ausgangswert.
+
+### Vorbereitung
+
+- Kopfhörer an **PHONES/REC OUT**. Der Lautsprecher ist dann stumm. Air Feel wirkt dort
+  ohnehin nicht.
+- Ein Kanal mit wenig Effekten, gern ein crunchiger Amp-Typ. Dann hört man die
+  Raumunterschiede am besten.
+- Optional zum Vergleich: BOSS Tone Studio, aber **nicht gleichzeitig** mit katana-helper
+  verbunden.
+
+### Ablauf im Editor
+
+1. [ ] Verbinden. Unten in „System (global)“ ist ein Wert markiert. **Notieren:** ________
+2. [ ] Nacheinander **REC**, **LIVE** und **BLEND** wählen und jeweils ein paar Akkorde
+       spielen. Im Debug-Log muss je „Bestätigt: Line Out Air Feel = …“ stehen.
+3. [ ] Klingt es verschieden? Erwartet:
+       - **REC:** trocken und direkt, nah mikrofoniert.
+       - **LIVE:** mehr Raum, weiter weg.
+       - **BLEND:** dazwischen.
+       Wenn ja, stimmt die Zuordnung. Wenn LIVE z. B. nach Aufnahme klingt, bitte notieren,
+       welcher Name zu welchem Klang passt.
+4. [ ] Hört man **über den Lautsprecher** (Kopfhörer raus) einen Unterschied? Erwartet: keinen.
+5. [ ] Falls zur Hand: Zeigt BOSS Tone Studio im SYSTEM-Tab denselben Wert?
+       Vorher katana-helper trennen.
+6. [ ] Auf **BLEND** stellen. Amp **aus- und wieder einschalten**, neu verbinden. Steht der
+       Schalter auf BLEND?
+       - **Ja:** Die Einstellung wird dauerhaft gespeichert.
+       - **Nein (wieder der alte Wert):** Bitte melden. Dann braucht es einen Speicherbefehl.
+7. [ ] Kanal am Amp wechseln. Bleibt Air Feel gleich? Erwartet: ja, es ist global.
+8. [ ] Zum Schluss den Wert aus Schritt 1 wieder einstellen.
+9. [ ] Debug → „Als Datei“ und Bescheid geben.
+
+### Ablauf auf der Diagnose-Seite (falls im Editor etwas nicht klappt)
+
+`/katana-helper/probe/` → „1. Web MIDI öffnen“ → Abschnitt **„Air Feel“**:
+
+1. [ ] **„Lesen“**. Im Log steht die Antwort als Hex, z. B.
+       `F0 41 00 00 00 00 33 12 00 00 00 29 00 57 F7` = REC. Die Seite merkt sich diesen Wert.
+2. [ ] **„REC/LIVE/BLEND setzen“** einzeln, ohne Häkchen bei Edit-Mode. Steht danach
+       jeweils „Bestätigt“?
+3. [ ] Falls „ABWEICHUNG“: Häkchen **„Vor dem Schreiben Edit-Mode einschalten“** setzen und
+       wiederholen. Damit klären wir, ob System-Werte den Edit-Mode brauchen.
+4. [ ] **„Alle drei nacheinander“** schreibt REC, LIVE, BLEND und danach den
+       Ausgangswert.
+5. [ ] **„Ursprünglichen Wert zurück“**, dann „Log kopieren“ oder „Als Datei“.

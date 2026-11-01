@@ -11,7 +11,8 @@
       <h1>Katana USB-Test</h1>
       <p class="hint">
         Prüft, ob dieser Browser den BOSS Katana MkII per WebUSB oder Web MIDI erreicht.
-        Sendet nur Lesebefehle und den Edit-Mode, nichts wird am Amp gespeichert.
+        Sendet nur Lesebefehle und den Edit-Mode, nichts wird am Amp gespeichert. Ausnahme ist der
+        Abschnitt „Air Feel“: Er schreibt eine globale Einstellung, nur wenn du dort klickst.
       </p>
 
       <section>
@@ -49,6 +50,27 @@
           <button id="midi-backup" disabled>Patch auslesen (Backup)</button>
           <button id="midi-editoff" class="secondary" disabled>Edit-Mode aus</button>
         </div>
+      </section>
+
+      <section>
+        <h2>Air Feel (System, global)</h2>
+        <p class="hint">
+          Line Out Air Feel an Adresse <code>00 00 00 29</code>: 00 = REC, 01 = LIVE, 02 = BLEND.
+          Läuft über den oben geöffneten Port (Web MIDI, sonst WebUSB). Jeder Schreibbefehl wird
+          sofort zurückgelesen, alles steht als Hex im Log. Der Amp behält die Einstellung
+          vermutlich auch nach dem Ausschalten. „Ursprünglichen Wert zurück“ stellt den Wert vom
+          ersten Lesen wieder her.
+        </p>
+        <div class="buttons">
+          <button id="af-read">Lesen</button>
+          <button id="af-rec">REC setzen</button>
+          <button id="af-live">LIVE setzen</button>
+          <button id="af-blend">BLEND setzen</button>
+          <button id="af-all" class="secondary">Alle drei nacheinander</button>
+          <button id="af-restore" class="secondary" disabled>Ursprünglichen Wert zurück</button>
+        </div>
+        <label class="check"><input type="checkbox" id="af-edit" /> Vor dem Schreiben Edit-Mode einschalten</label>
+        <p class="hint" id="af-status">Ursprünglicher Wert: noch nicht gelesen</p>
       </section>
 
       <section>

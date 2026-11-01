@@ -20,11 +20,12 @@ oder von ihm empfängt. Stand: 2026-11-01.
 
 | Kürzel | Quelle | Version / Stand | Bezug |
 | --- | --- | --- | --- |
-| **Q1** | Steven Hirsch, `doc/katana_sysex.txt` – <https://github.com/snhirsch/katana-midi-bridge/blob/master/doc/katana_sysex.txt> | v1.7, 2017-03-23 | **MkI** (Katana 100 Combo, 1. Generation). Format, Checksumme und System-Adressen gelten auch für den MkII; die **Patch-Adressen nicht**. |
+| **Q1** | Steven Hirsch, `doc/katana_sysex.txt` – <https://github.com/snhirsch/katana-midi-bridge/blob/master/doc/katana_sysex.txt> | v1.7, 2017-03-23 | **MkI** (Katana 100 Combo, 1. Generation). Format, Checksumme, Edit-Mode und Kanal-Adresse gelten auch für den MkII; die **Patch-Adressen und die Offsets im System-Bereich nicht** (10.6). |
 | **Q2** | Colin Willcocks („Gumtown“), *Katana MK2 FxFloorBoard*, Quellcode `Katana_Mk2_FxFloorBoard_source_code_20240515.zip` – <https://sourceforge.net/projects/fxfloorboard/files/KatanaFxFloorBoard/Katana%20FxFloorboard%20for%20MK2%20Desktop/> | Source 2024-05-15, `midi.xml` „KATANA Midi implementation“ v2.02 | MkII, Firmware 2. Wichtigste Quelle für die Adresstabelle. Zeilenangaben `midi.xml:NNNNN` beziehen sich auf diese Datei. |
 | **Q3** | s4mdf0o1, *TuxKatana* – <https://github.com/s4mdf0o1/TuxKatana> | Commit `2c35bc4`, 2025-10-21 | MkII. `params/*.yaml` (Adressen), `params/config.yaml` (Kanalwechsel), `HOW.md` (mitgeschnittene Nachrichten). |
 | **Q4** | fpereira3, *ktnacontrol* (Android-App) – <https://github.com/fpereira3/ktnacontrol> | Commit `5d5dd73`, 2026-09-10 | MkII. `app/src/main/java/dev/alonx3/ktnacontrol/protocol/KatanaAddresses.kt` und `BACKLOG.md` dokumentieren Hardwaretests pro Adresse. |
 | **Q5** | BOSS/Roland Support – <https://www.boss.info/au/support/by_product/katana-50_mk2/updates_drivers/925b13ac-a4af-4069-b09c-836b956375e7/> | – | Treiberpflicht unter macOS/Windows. |
+| **Q6** | BOSS: Produktseite Katana-Artist MkII – <https://www.boss.info/US/products/katana-artist_mk2>, Pressemitteilung „Version 2 Update for Katana MkII“ (2022-07-14) – <https://www.roland.com/us/company/press_releases/2022/BOSS-Announces-Version-2-Update-for-Katana-MkII-Gu/> | – | Was Air Feel und Line Out Custom bewirken (keine Adressen). |
 
 ### Lizenzen der Quellen – was wir übernehmen dürfen
 
@@ -213,7 +214,7 @@ Auffällig: Q2 sendet für „aktuellen Kanal abfragen“ die Checksumme `FD`
 
 | Bereich | Inhalt | Quelle |
 | --- | --- | --- |
-| `00 00 xx xx` | System (USB-Pegel, globale Einstellungen) | Q1, Q2 `<System>` |
+| `00 00 xx xx` | **System**: globale Einstellungen (USB, Global EQ, Line Out Air Feel, Line Out Custom …). Gilt für alle Kanäle, liegt in keinem Patch. Details: Abschnitt 12. | Q2 `<System>`, eigener Test |
 | `00 01 00 00` | Aktiver Kanal (2 Byte) | Q1, Q2, Q3 |
 | `00 02 00 00` | MIDI-Empfangskanal (`00`–`0F`) | Q1 Z. 116–117 |
 | `10 00 00 00` | Laut Q3 Gerätename (16 Byte), bei uns Name des Panel-Patches (siehe 2.2) | Q3, eigener Test |
@@ -713,7 +714,109 @@ Unsichtbare Chrome-Instanz, Mac, Amp im Panel-Kanal, alle Effekte aus:
   hat der Amp bestätigt. Danach meldete der Editor „Keine Änderungen“.
 - Hörbare Änderungen sind noch nicht getestet (`device-test.md` Teil 5).
 
+### 10.6 System-Bereich und Air Feel, 2026-11-01
+
+Unsichtbare Chrome-Instanz, Mac, Web MIDI. Nur gelesen, dazu ein Schreibbefehl mit dem schon
+eingestellten Wert:
+
+- `RQ1 00 00 00 29`, Größe 1, **ohne** Edit-Mode: Antwort
+  `F0 41 00 00 00 00 33 12 00 00 00 29 00 57 F7` → `00` = REC. Mit Edit-Mode gleich. Lesen
+  braucht den Edit-Mode also nicht.
+- `RQ1 00 00 00 00`, Größe `30`: 48 Byte, eine Antwort.
+  `00 14 32 19 01 00 00 32 | 00 × 8 | 01 00 01 08 14 08 02 16 17 01 14 14 0E 14 | 18 × 11 | 00 00 00 00 14 02 04`.
+  Das passt zum Aufbau in Q2: USB-Pegel bei 0 dB / 100 % (`14`, `32`), Global EQ an (`10` = `01`),
+  alle GEQ-Bänder 0 dB (`18`), Power-Amp-In-Level 0 dB (`2D` = `14`), EQ3 gewählt (`2E` = `02`),
+  Power Control „Half“ (`2F` = `04`). Die MkI-Adressen aus Q1 (USB bei `00 00 00 51`–`57`)
+  gelten für den MkII also **nicht**.
+- `RQ1 00 00 01 10`, Größe `0B`: `00 00 04 0A 04 64 0A 00 02 0A 04` → Line Out Custom aus,
+  MIC 1 gewählt, MIC 1 = RBN121 (`04`), 10 cm, 4 cm; MIC 2 = CND451 (`02`), 10 cm, 4 cm.
+  `01 15`–`01 17` (`64 0A 00`) sind in Q2 nicht benannt.
+- `DT1 00 00 00 29 00` (REC, unverändert), ohne Edit-Mode, nach 300 ms zurückgelesen: `00`.
+  Der Amp nimmt den Befehl an und meldet nichts zurück, wie bei Patch-Adressen.
+- Nicht getestet: andere Werte schreiben, Klang, Verhalten nach Aus- und Einschalten
+  (`device-test.md` Teil 7).
+
 ## 11. Offene Punkte
 
 Die Checkliste für den Gerätetest und alle offenen Protokollfragen stehen jetzt in
 [`device-test.md`](device-test.md).
+
+---
+
+## 12. System-Parameter
+
+Globale Einstellungen. In BOSS Tone Studio stehen sie im SYSTEM-Tab (neben Cab Sim/Line Out
+und Global EQ). Sie gelten für alle Kanäle und gehören zu keinem Patch. Darum fehlen sie
+in Patch-Backups und in der Bibliothek.
+
+### 12.1 Adressraum, Speichern, Edit-Mode
+
+| Frage | Antwort | Quelle | Status |
+| --- | --- | --- | --- |
+| Eigener Adressraum? | Ja. System = `00 00 xx xx`. Q2 bildet die Adresse als `00` + Bereich + Seite + Offset; das Air-Feel-Feld `"00", "00", "29"` wird zu `00 00 00 29`. Patches liegen woanders (`60 00 …` temporär, `10 0n …` gespeichert). | Q2 `MidiTable.cpp:581–612` (`dataChange`, Zweig `System`), `midi.xml:48` `<System>` | GETESTET (eigen), 10.6 |
+| Lesen | Normales RQ1. Q2 liest den System-Bereich als `RQ1 00 00 00 00`, Größe `00 02 00 1D` (`globalVariables.h:66`). Wir lesen nur die einzelnen Bytes. | Q2, eigener Test | GETESTET (eigen) |
+| Schreiben | Normales DT1, ohne eigenen Speicherbefehl. Q2 schickt System-Werte nur als DT1 (`SysxIO.cpp:1095–1112` `systemWrite`, Einzelwerte über `dataChange`) und nennt das „replace the SYSTEM DATA currently stored in the KATANA“ (`mainWindow.cpp:768`). Der Speicherbefehl `7F 00 01 04` gilt nur für Patches. | Q2 | **UNVERIFIZIERT** (nur Q2) |
+| Bleibt die Einstellung nach dem Ausschalten? | Laut Q2 ja, weil der Wert sofort im Amp gespeichert wird. Nicht geprüft. | Q2 | **UNVERIFIZIERT** → `device-test.md` Teil 7 |
+| Edit-Mode nötig? | Zum Lesen nein (10.6). Ein Schreiben ohne Edit-Mode nahm der Amp an (unveränderter Wert). Ob ein *anderer* Wert ohne Edit-Mode wirkt, ist offen. Die App ist sowieso immer im Edit-Mode. | eigener Test | Lesen GETESTET (eigen), Schreiben UNVERIFIZIERT |
+
+### 12.2 Line Out Air Feel
+
+| Adresse | Größe | Werte | Quelle | Status |
+| --- | --- | --- | --- | --- |
+| `00 00 00 29` | 1 | `00` = REC, `01` = LIVE, `02` = BLEND | Q2 `midi.xml:262–266` („Output: Line Out Mode“ mit Record, Live, Blend), `stompbox_cab.cpp:86–91` (Gruppe „Line Output“) | Adresse und Lesen: **GETESTET (eigen)** (10.6). Zuordnung der Werte und Wirkung: **UNVERIFIZIERT** (nur Q2) → `device-test.md` Teil 7 |
+
+- Wirkt nur auf LINE OUT, PHONES/REC OUT und USB-Audio, nicht auf den Lautsprecher (Q6).
+- REC = nah mikrofoniert wie bei einer Aufnahme, LIVE = Amp im Raum, BLEND = Mischung aus beiden.
+- Ist Line Out Custom an (12.3), gilt die Custom-Einstellung. Q2 graut den Air-Feel-Schalter
+  dann aus (`stompbox_cab.cpp:89`, `customSystemOverride.cpp`: Overlay, solange
+  `00 00 01 10` ≥ `01`).
+
+Nachrichten (Checksumme = (128 − Summe aus Adresse und Daten mod 128) mod 128). Die
+Vitest-Tests in `src/lib/system.test.js` prüfen genau diese Bytes:
+
+| Zweck | Nachricht |
+| --- | --- |
+| Lesen | `F0 41 00 00 00 00 33 11 00 00 00 29 00 00 00 01 56 F7` |
+| REC setzen | `F0 41 00 00 00 00 33 12 00 00 00 29 00 57 F7` |
+| LIVE setzen | `F0 41 00 00 00 00 33 12 00 00 00 29 01 56 F7` |
+| BLEND setzen | `F0 41 00 00 00 00 33 12 00 00 00 29 02 55 F7` |
+| Antwort bei REC (gemessen) | `F0 41 00 00 00 00 33 12 00 00 00 29 00 57 F7` |
+
+### 12.3 Line Out Custom (ab Katana MkII Version 2)
+
+Version 2 (2022) erweitert die Line-Out-Simulation um wählbare virtuelle Mikrofone mit
+Position (Q6). In Q2 heißt der Bereich „Custom Mic“, Seite 2 des Systembereichs. Zwei
+Einstellungen (MIC 1, MIC 2), eine davon aktiv. Beim Katana-Artist MkII entspricht das dem
+Schalter CUSTOM SETTING OFF/M1/M2 (Q6).
+
+| Adresse | Parameter | Werte | Quelle | Status |
+| --- | --- | --- | --- | --- |
+| `00 00 01 10` | Line Out Custom an/aus | `00` aus, `01` an | Q2 `midi.xml:839`, `stompbox_cab.cpp:99` | gelesen (10.6), sonst UNVERIFIZIERT |
+| `00 00 01 11` | Auswahl | `00` MIC 1, `01` MIC 2 | Q2 `midi.xml:843` | gelesen, UNVERIFIZIERT |
+| `00 00 01 12` | MIC 1 Typ | `00` DYN57, `01` DYN421, `02` CND451, `03` CND87, `04` RBN121 | Q2 `midi.xml:847` | gelesen, UNVERIFIZIERT |
+| `00 00 01 13` | MIC 1 Abstand | `00`–`14` = 0–20 cm | Q2 `midi.xml:854` | gelesen, UNVERIFIZIERT |
+| `00 00 01 14` | MIC 1 Position | `00`–`0A` = 0–10 cm (von der Mitte) | Q2 `midi.xml:857` | gelesen, UNVERIFIZIERT |
+| `00 00 01 15`–`17` | ? | gelesen `64 0A 00`, in Q2 nicht benannt. Möglicherweise „Ambience“ (Version 2 nennt Mic Type/Mic Position/Ambience), nicht belegt. | – | UNBEKANNT |
+| `00 00 01 18` | MIC 2 Typ | wie MIC 1 | Q2 `midi.xml:863` | gelesen, UNVERIFIZIERT |
+| `00 00 01 19` | MIC 2 Abstand | wie MIC 1 | Q2 `midi.xml:870` | gelesen, UNVERIFIZIERT |
+| `00 00 01 1A` | MIC 2 Position | wie MIC 1 | Q2 `midi.xml:873` | gelesen, UNVERIFIZIERT |
+
+katana-helper liest nur `00 00 01 10`, um einen Hinweis zu zeigen, wenn Custom an ist. Die
+Custom-Regler sind noch nicht im Editor.
+
+### 12.4 Weitere System-Werte (Auszug, nicht im Editor)
+
+| Adresse | Parameter | Quelle |
+| --- | --- | --- |
+| `00 00 00 00`–`07` | USB: In/Out Mode, To Effect Level, Effect Out Level, Mix Level, Direct Monitor, Direct Monitor CMD, Loopback, Dry Output Level | Q2 `midi.xml:51–79` |
+| `00 00 00 10` | Global EQ an/aus | Q2 `midi.xml:87`, `menuPage_system.cpp:49` |
+| `00 00 00 11`–`28` | Global EQ (Art, Position, PEQ, GEQ) | Q2 `midi.xml:91–261` |
+| `00 00 00 2E` | Global EQ 1–3 (grün/rot/gelb) | Q2 `midi.xml:284` |
+| `00 00 00 2F` | Power Control (10 %–90 %, Half) | Q2 `midi.xml:289` |
+
+Status: UNVERIFIZIERT (nur Q2). Die gelesenen Werte (10.6) sind plausibel.
+
+Keine Treffer zu Air Feel, Line Out oder System-Adressen in Q3 (TuxKatana) und Q4
+(ktnacontrol); Q4 erwähnt „Line Out Only“ nur als Position des Global EQ. Q1 beschreibt den
+MkI mit anderen Offsets (10.6). katana-rs enthält eine Kopie von Q2 `midi.xml` und zählt
+nicht als eigene Quelle.

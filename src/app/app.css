@@ -304,6 +304,94 @@ summary:focus-visible,
   background: var(--accent);
 }
 
+/* ---------------------------------------------------------------- system (global) */
+
+/* Global settings look different from the patch cards: dashed frame, field background. */
+.system {
+  border-style: dashed;
+  border-width: 2px;
+  background: var(--field);
+}
+
+.system-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.system-head h2 {
+  margin: 0;
+}
+
+.system-badge {
+  margin-left: 0;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--line);
+  font-weight: 600;
+}
+
+.air-feel-set {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.air-feel-legend {
+  float: left;
+  padding: 0;
+  font-weight: 700;
+}
+
+.segmented.big {
+  flex: 1 1 320px;
+  max-width: 480px;
+  flex-wrap: nowrap;
+}
+
+.segmented.big .seg {
+  flex: 1 1 0;
+}
+
+.segmented.big .seg span {
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  background: var(--card);
+}
+
+.segmented.big .seg input:checked + span {
+  background: var(--fg);
+}
+
+.air-feel-set:disabled .seg {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.system-warn,
+.system-error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.system-warn {
+  color: var(--warn);
+}
+
+.system-error {
+  color: var(--err);
+}
+
 /* segmented control built from radio inputs */
 .segmented {
   display: flex;

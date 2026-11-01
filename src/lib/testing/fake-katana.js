@@ -1,7 +1,8 @@
 // Test double: a Katana MkII behind fake Web MIDI ports. It keeps the temporary patch and
 // the nine stored channels, answers RQ1 like the real amp (241-byte messages, gap at
 // 07 44–07 7F, 1932 bytes per patch, see docs/protocol.md 2.3), stores DT1 writes and
-// carries out the save command. Only used by tests.
+// carries out the save command. It also keeps parts of the system area (00 00 00 00–2F, 00 00 01 10–1A,
+// values read from our amp on 2026-11-01). Only used by tests.
 
 import { ADDR, PATCH_DUMP_SIZE, buildDT1, fromBase128, hex, parseHex, parseSysex, toBase128 } from '../sysex.js';
 import { WebMidiTransport } from '../midi-transport.js';
@@ -27,10 +28,27 @@ export function samplePatch(name) {
   return p;
 }
 
-export function fakeKatana({ name = 'muur zusamstra?e', answers = true, saves = true } = {}) {
+/** System area as offset → byte, from our amp (docs/protocol.md 10.6). */
+export function sampleSystem() {
+  const s = new Map();
+  const page1 = '00 14 32 19 01 00 00 32 00 00 00 00 00 00 00 00 01 00 01 08 14 08 02 16 17 01 14 14 0E 14 18 18 18 18 18 18 18 18 18 18 18 00 00 00 00 14 02 04';
+  parseHex(page1).forEach((b, i) => s.set(i, b));
+  parseHex('00 00 04 0A 04 64 0A 00 02 0A 04').forEach((b, i) => s.set(128 + 0x10 + i, b));
+  return s;
+}
+
+export function fakeKatana({
+  name = 'muur zusamstra?e',
+  answers = true,
+  saves = true,
+  systemAnswers = true,
+  systemWrites = true,
+} = {}) {
   const channelNames = [name, 'MUUR Main', 'MUUR Main FXLoop', 'Mono', 'Blackout', 'Lifer', 'ethereal', 'banjo', 'Princeton'];
   const stored = channelNames.map((n) => samplePatch(n));
   const temp = samplePatch(name);
+  const system = sampleSystem();
+  const sys = { answers: systemAnswers, writes: systemWrites };
   const sent = [];
   let channel = 0;
 
@@ -41,6 +59,7 @@ export function fakeKatana({ name = 'muur zusamstra?e', answers = true, saves = 
   const region = (address) => {
     if (address[0] === 0x60 && address[1] === 0x00) return [temp, [0x60, 0, 0, 0]];
     if (address[0] === 0x10 && address[1] <= 8) return [stored[address[1]], [0x10, address[1], 0, 0]];
+    if (address[0] === 0x00 && address[1] === 0x00) return [system, [0, 0, 0, 0]];
     return null;
   };
 
@@ -49,6 +68,7 @@ export function fakeKatana({ name = 'muur zusamstra?e', answers = true, saves = 
     const r = region(address);
     if (!r) return;
     const [mem, base] = r;
+    if (mem === system && !sys.answers) return;
     const baseAbs = fromBase128(base);
     let o = fromBase128(address) - baseAbs;
     const end = o + size;
@@ -81,9 +101,9 @@ export function fakeKatana({ name = 'muur zusamstra?e', answers = true, saves = 
         if (saves) temp.forEach((b, o) => stored[msg.data[1]].set(o, b));
       } else {
         const r = region(msg.address);
-        if (r && r[0] === temp) {
+        if (r && (r[0] === temp || (r[0] === system && sys.writes))) {
           const o = fromBase128(msg.address) - fromBase128(r[1]);
-          msg.data.forEach((b, i) => temp.set(o + i, b));
+          msg.data.forEach((b, i) => r[0].set(o + i, b));
         }
       }
     },
@@ -102,6 +122,14 @@ export function fakeKatana({ name = 'muur zusamstra?e', answers = true, saves = 
     sent,
     temp,
     stored,
+    system,
+    /** System byte by 00 00 xx xx address. */
+    systemByte: (address) => system.get(fromBase128(address)),
+    /** Make the system area stop answering reads or ignore writes. */
+    setSystem({ answers = sys.answers, writes = sys.writes } = {}) {
+      sys.answers = answers;
+      sys.writes = writes;
+    },
     get channel() {
       return channel;
     },

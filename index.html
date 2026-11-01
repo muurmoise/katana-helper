@@ -65,6 +65,23 @@
         </section>
       </fieldset>
 
+      <section class="card system" aria-labelledby="system-title">
+        <div class="system-head">
+          <h2 id="system-title">System (global)</h2>
+          <span class="badge system-badge">nicht im Patch</span>
+        </div>
+        <fieldset id="air-feel-set" class="air-feel-set" disabled>
+          <legend id="air-feel-label" class="air-feel-legend">Line Out</legend>
+          <div id="air-feel" class="segmented big" role="radiogroup" aria-labelledby="air-feel-label"></div>
+        </fieldset>
+        <p class="note">Gilt für alle Kanäle. Betrifft nur Line Out, Kopfhörer und USB, nicht den Lautsprecher.</p>
+        <p id="air-feel-status" class="note" role="status"></p>
+        <p id="air-feel-custom" class="system-warn" hidden>
+          Am Amp ist „Line Out Custom“ eingeschaltet. Dann gilt die Custom-Einstellung, Air Feel wirkt nicht.
+        </p>
+        <p id="air-feel-error" class="system-error" role="alert" hidden></p>
+      </section>
+
       <section class="card patches" aria-labelledby="patches-title">
         <div class="patches-head">
           <h2 id="patches-title">Patches</h2>
