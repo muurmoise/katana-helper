@@ -3,7 +3,7 @@
 ## Projektziel
 
 Ein schlichter Editor für den BOSS Katana-100 MkII. Er liest und schreibt Parameter per
-Roland-SysEx. Umsetzung als Web-App (Vanilla JS + Vite, später PWA), gehostet auf GitHub Pages
+Roland-SysEx. Umsetzung als Web-App (Vanilla JS + Vite, PWA), gehostet auf GitHub Pages
 unter `/katana-helper/`.
 
 Hinweis: Der Projektpfad enthält ein Leerzeichen (`katana helper`). Pfade in Shell-Befehlen
@@ -127,11 +127,30 @@ Regeln im Code:
 
 Offen: Martins Hörtest nach `docs/device-test.md` Teil 5.
 
-### Phase 5 – PWA
+### Phase 5 – PWA ← umgesetzt, Installation am Mac durch Martin ausstehend
 
-Service Worker mit Versionierung und Update-Hinweis. Vorher **keinen** Service Worker
-einbauen, damit beim Testen kein Cache stört. Installierbar als Chrome-App am Mac. Cloudflare Pages als
-Alternative zu GitHub Pages im README beschreiben.
+Service Worker mit Versionierung und Update-Hinweis, installierbar als Chrome-App, offline
+nutzbar. Cloudflare Pages als Alternative steht im README. Ohne zusätzliche Abhängigkeit
+(kein vite-plugin-pwa / Workbox).
+
+| Datei | Aufgabe |
+| --- | --- |
+| `build/pwa-plugin.js` | Vite-Plugin (nur Build): `manifest.webmanifest` und `sw.js` nach dem Schreiben von `dist/`, Manifest-Link und `theme-color` in `index.html` |
+| `src/pwa/sw.js` | Service Worker (Skript ohne Imports, bekommt `const KH = { version, precache }` vorangestellt) |
+| `src/pwa/register.js` | `registerServiceWorker` (Update-Erkennung, `SKIP_WAITING` nur auf Klick), `watchInstall`, `isInstalled` |
+| `public/icons/` | `icon.svg`, `icon-192.png`, `icon-512.png`, `maskable-512.png` |
+
+Regeln im Code:
+- Version = `package.json`-Version + Commit (`__APP_VERSION__`, z. B. `0.5.0+d24dc27`), Cache
+  `katana-helper-<version>`. `APP_VERSION` überschreibt sie, `BASE_PATH` den Pfad (Standard
+  `/katana-helper/`).
+- Der Service Worker wird nur im Build registriert (`import.meta.env.PROD`). `npm run dev`
+  cacht nichts.
+- Alles aus dem Build kommt aus dem Cache, alles andere aus dem Netz. Ein neuer Build
+  übernimmt erst nach Klick auf „Aktualisieren“. Nie automatisch `skipWaiting`, sonst
+  wechselt die App mitten in einer Sitzung.
+- Bei nicht zurückgenommenen Änderungen fragt „Aktualisieren“ nach. Während einer
+  Patch-Aktion (`manager.busy`) wird nicht neu geladen.
 
 ## Konventionen
 
@@ -152,7 +171,8 @@ Alternative zu GitHub Pages im README beschreiben.
 npm install
 npm run dev      # Entwicklungsserver, http://localhost:5173/katana-helper/
 npm test         # Vitest
-npm run build    # nach dist/
+npm run build    # nach dist/, mit sw.js und manifest.webmanifest
+npm run preview  # fertigen Build testen, http://localhost:4173/katana-helper/
 ```
 
 Deploy: Push auf `main` → GitHub Actions (`.github/workflows/deploy.yml`) → GitHub Pages.

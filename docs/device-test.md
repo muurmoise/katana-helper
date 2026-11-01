@@ -227,3 +227,22 @@ Nichts davon wird gespeichert.
        2x2 Chorus, DC-30. Stimmt die Anzeige mit BOSS Tone Studio überein, falls zur Hand?
 10. [ ] **„Änderungen zurücknehmen“**. Klingt es wieder wie vorher?
 11. [ ] Debug → „Als Datei“ und Bescheid geben.
+
+---
+
+## Teil 6 – Als App installieren (Phase 5)
+
+Am Mac in Chrome. In einer unsichtbaren Chrome-Instanz sind Offline-Start und Update getestet.
+Offen ist die echte Installation.
+
+1. [ ] <https://muurmoise.github.io/katana-helper/> öffnen. Unten auf der Seite stehen
+       „Version 0.5.0+…“ und der Knopf **„Als App installieren“**. Klicken und bestätigen.
+2. [ ] Die App öffnet sich in einem eigenen Fenster. Verbindet sie sich mit dem Amp, ohne
+       erneut nach MIDI zu fragen? Unten steht „· als App“.
+3. [ ] Im Dock und im Launchpad ist das Icon (roter Drehregler) zu sehen? Sieht es ordentlich aus?
+4. [ ] App schließen, WLAN aus, App wieder starten. Startet sie, und verbindet sie sich mit
+       dem Amp?
+5. [ ] Beim nächsten Update (nächster Push) erscheint oben „Neue Version von katana-helper
+       verfügbar“. „Aktualisieren“ klicken: Die Seite lädt neu, die Versionsnummer unten
+       ist neu.
+6. [ ] Bibliothek prüfen: Sind die Patches in der App dieselben wie im Browser-Tab?

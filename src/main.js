@@ -11,6 +11,7 @@ import { PatchManager } from './lib/manager.js';
 import { Logger } from './lib/log.js';
 import { WebMidiTransport, midiPermission } from './lib/midi-transport.js';
 import { hex } from './lib/sysex.js';
+import { isInstalled, registerServiceWorker, watchInstall } from './pwa/register.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -126,12 +127,53 @@ $('manual-connect').onclick = () => {
 // Switch edit mode off when the tab closes, so the amp is not left in remote mode.
 window.addEventListener('pagehide', () => connection.pageHide());
 
+// ------------------------------------------------------------------ app version, update, install
+
+const VERSION = __APP_VERSION__;
+$('app-version').textContent = `Version ${VERSION}${isInstalled() ? ' · als App' : ''}`;
+$('f-app').textContent = VERSION;
+
+function showUpdate(apply) {
+  $('update').hidden = false;
+  $('update-later').onclick = () => ($('update').hidden = true);
+  $('update-apply').onclick = () => {
+    if (
+      editor.dirty &&
+      !confirm(
+        'Die Seite lädt neu. Der aktuelle Klang bleibt im Amp, aber „Änderungen zurücknehmen“ kennt danach den alten Stand nicht mehr. Trotzdem aktualisieren?',
+      )
+    ) {
+      return;
+    }
+    if (manager.busy) {
+      alert(`Bitte warten: ${manager.busy}`);
+      return;
+    }
+    $('update-apply').disabled = true;
+    apply();
+  };
+}
+
+const install = watchInstall({ onChange: (available) => ($('install').hidden = !available) });
+$('install').onclick = async () => {
+  if (await install()) logger.add('ok', 'katana-helper als App installiert');
+};
+
+// The service worker only exists in the built app; during development nothing is cached.
+if (import.meta.env.PROD) {
+  registerServiceWorker({
+    base: import.meta.env.BASE_URL,
+    onUpdate: showUpdate,
+    log: (level, text) => logger.add(level, text),
+  });
+}
+
 // ------------------------------------------------------------------ start
 
 mountLog(logger);
 mountEditor(editor, connection);
 mountPatches({ manager, library, editor, connection });
-logger.add('info', `Browser: ${navigator.userAgent}`);
+logger.add('info', `katana-helper ${VERSION}${isInstalled() ? ' (als App)' : ''}, Browser: ${navigator.userAgent}`);
 render();
 
 if (connection.state !== 'unsupported') {

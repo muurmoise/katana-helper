@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>katana-helper</title>
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/src/app/app.css" />
   </head>
   <body>
@@ -15,6 +16,13 @@
       <button id="connect">Verbinden</button>
       <button id="disconnect" class="secondary" hidden>Trennen</button>
     </header>
+
+    <div id="update" class="update" role="status" hidden>
+      <span>Neue Version von katana-helper verfügbar.</span>
+      <span class="spacer"></span>
+      <button id="update-later" class="secondary small" type="button">Später</button>
+      <button id="update-apply" class="small" type="button">Aktualisieren</button>
+    </div>
 
     <p id="hint" class="banner"></p>
 
@@ -127,6 +135,8 @@
               <dd id="f-edit">–</dd>
               <dt>MIDI-Ports</dt>
               <dd id="f-ports">–</dd>
+              <dt>App-Version</dt>
+              <dd id="f-app">–</dd>
             </dl>
             <details id="manual">
               <summary>Ports von Hand wählen</summary>
@@ -159,6 +169,10 @@
     <footer class="foot">
       Nur Google Chrome am Mac mit BOSS-KATANA-Treiber. Speichert nur nach Rückfrage und mit Backup in einen Kanal.
       <a href="probe/">Diagnose-Seite (USB-Test)</a>
+      <span class="foot-row">
+        <span id="app-version"></span>
+        <button id="install" class="secondary small" type="button" hidden>Als App installieren</button>
+      </span>
     </footer>
 
     <script type="module" src="/src/main.js"></script>
