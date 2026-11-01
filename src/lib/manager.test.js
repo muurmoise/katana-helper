@@ -46,7 +46,11 @@ describe('patch helpers', () => {
     expect(writes.every((w) => w.data.length <= 241)).toBe(true);
     const written = writes.reduce((n, w) => n + w.data.length, 0);
     expect(written).toBe(PATCH_BYTES - LIVE_OFFSETS.size);
-    expect(writes[0].address).toEqual([0x60, 0x00, 0x00, 0x00]);
+    // Panel block first, then the rest from the start of the patch.
+    expect(writes[0].address).toEqual([0x60, 0x00, 0x06, 0x00]);
+    expect(writes.find((w) => w.address[2] !== 0x06).address).toEqual([0x60, 0x00, 0x00, 0x00]);
+    const panelEnd = writes.findIndex((w) => w.address[2] !== 0x06);
+    expect(writes.slice(panelEnd).every((w) => w.address[2] !== 0x06)).toBe(true);
   });
 
   it('round-trips through the storage format', () => {

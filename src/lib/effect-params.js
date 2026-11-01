@@ -12,12 +12,25 @@ const P = (hi, lo) => [0x60, 0x00, hi, lo];
 const signed = (n) => (n > 0 ? `+${n}` : String(n));
 
 const num = (label, lo, max = 100) => ({ label, lo, kind: 'range', min: 0, max, show: String });
+// Display value = (raw − offset) × scale. `off`: raw 0 means "Off", the rest counts from 1.
 // 0–100 shown as -50…+50
-const bip = (label, lo) => ({ label, lo, kind: 'range', min: 0, max: 100, show: (v) => signed(v - 50) });
+const bip = (label, lo) => ({ label, lo, kind: 'range', min: 0, max: 100, offset: 50, show: (v) => signed(v - 50) });
 // 0–40 shown as -20…+20 dB
-const db = (label, lo) => ({ label, lo, kind: 'range', min: 0, max: 40, show: (v) => `${signed(v - 20)} dB` });
+const db = (label, lo) => ({ label, lo, kind: 'range', min: 0, max: 40, offset: 20, unit: 'dB', show: (v) => `${signed(v - 20)} dB` });
 // 0–48 shown as -24…+24 semitones
-const semi = (label, lo) => ({ label, lo, kind: 'range', min: 0, max: 48, show: (v) => signed(v - 24) });
+const semi = (label, lo) => ({ label, lo, kind: 'range', min: 0, max: 48, offset: 24, unit: 'Halbtöne', show: (v) => signed(v - 24) });
+// 0–48 shown as -12…+12 dB in 0.5 dB steps (EQ 1/2 of the patch, graphic bands)
+const halfDb = (label, lo) => ({
+  label,
+  lo,
+  kind: 'range',
+  min: 0,
+  max: 48,
+  offset: 24,
+  scale: 0.5,
+  unit: 'dB',
+  show: (v) => `${signed((v - 24) / 2)} dB`,
+});
 const list = (label, lo, names) => ({ label, lo, kind: 'list', options: names.map((n, i) => [i, n]) });
 const sw = (label, lo, names = ['Off', 'On']) => ({ ...list(label, lo, names), kind: 'switch' });
 // Two bytes, value = first * 128 + second.
@@ -28,6 +41,7 @@ const wide = (label, lo, min, max, unit = '') => ({
   size: 2,
   min,
   max,
+  unit: unit || undefined,
   show: (v) => (unit ? `${v} ${unit}` : String(v)),
 });
 
@@ -192,7 +206,7 @@ export const MOD_PARAMS = {
     num('Depth', M(2, 0x05)),
     num('Manual', M(2, 0x06)),
     num('Resonance', M(2, 0x07)),
-    { label: 'Step Rate', lo: M(2, 0x08), kind: 'range', min: 0, max: 101, show: (v) => (v === 0 ? 'Off' : String(v - 1)) },
+    { label: 'Step Rate', lo: M(2, 0x08), kind: 'range', min: 0, max: 101, offset: 1, off: true, show: (v) => (v === 0 ? 'Off' : String(v - 1)) },
     num('Effect Level', M(2, 0x09)),
     num('Direct Mix', M(2, 0x0a)),
   ],
@@ -255,11 +269,11 @@ export const MOD_PARAMS = {
     list('Xover Freq', M(2, 0x37), XOVER),
     num('Low Rate', M(2, 0x38)),
     num('Low Depth', M(2, 0x39)),
-    { label: 'Low Pre Delay', lo: M(2, 0x3a), kind: 'range', min: 0, max: 80, show: (v) => `${(v / 2).toFixed(1)} ms` },
+    { label: 'Low Pre Delay', lo: M(2, 0x3a), kind: 'range', min: 0, max: 80, scale: 0.5, unit: 'ms', show: (v) => `${(v / 2).toFixed(1)} ms` },
     num('Low Level', M(2, 0x3b)),
     num('High Rate', M(2, 0x3c)),
     num('High Depth', M(2, 0x3d)),
-    { label: 'High Pre Delay', lo: M(2, 0x3e), kind: 'range', min: 0, max: 80, show: (v) => `${(v / 2).toFixed(1)} ms` },
+    { label: 'High Pre Delay', lo: M(2, 0x3e), kind: 'range', min: 0, max: 80, scale: 0.5, unit: 'ms', show: (v) => `${(v / 2).toFixed(1)} ms` },
     num('High Level', M(2, 0x3f)),
     num('Direct Mix', M(2, 0x40)),
   ],
@@ -332,7 +346,7 @@ const D = {
   highCut: list('High Cut', 0x05, HIGH_CUT),
   effect: num('Effect Level', 0x06, 120),
   direct: num('Direct Mix', 0x07),
-  tap: { ...num('Tap Time', 0x08), show: (v) => `${v} %` },
+  tap: { ...num('Tap Time', 0x08), unit: '%', show: (v) => `${v} %` },
   d1Time: wide('D1 Time', 0x09, 1, 1000, 'ms'),
   d1Feedback: num('D1 Feedback', 0x0b),
   d1HighCut: list('D1 High Cut', 0x0c, HIGH_CUT),
@@ -371,7 +385,7 @@ const DELAY_PARAMS = {
 // `lo` = offset from 60 00 05 40.
 
 const REVERB_COMMON = [
-  { label: 'Time', lo: 0x02, kind: 'range', min: 0, max: 99, show: (v) => `${((v + 1) / 10).toFixed(1)} s` },
+  { label: 'Time', lo: 0x02, kind: 'range', min: 0, max: 99, offset: -1, scale: 0.1, unit: 's', show: (v) => `${((v + 1) / 10).toFixed(1)} s` },
   wide('Pre Delay', 0x03, 0, 500, 'ms'),
   list('Low Cut', 0x05, LOW_CUT),
   list('High Cut', 0x06, HIGH_CUT),
@@ -439,6 +453,55 @@ export function formatValue(param, value) {
   if (value === undefined) return '–';
   if (param.options) return param.options.find(([v]) => v === value)?.[1] ?? `? (${value})`;
   return param.show(value);
+}
+
+// ---------------------------------------------------------------- display values
+// Presets (preset.js) give values as shown in the editor and in BOSS Tone Studio:
+// -50…+50, dB, ms, seconds, or the name of a list entry.
+
+/** Builders and value lists, for other parameter tables (patch EQ, noise suppressor …). */
+export const PARAM_KINDS = { num, bip, db, halfDb, list, sw };
+export const VALUE_LISTS = { LOW_CUT, FREQ, HIGH_CUT, Q };
+
+const norm = (text) => String(text).toLowerCase().replace(/[\s_]+/g, '');
+const round = (x) => Math.round(x * 1000) / 1000;
+
+/** Display value for a raw value: a number, an option name, or "Off". */
+export function fromRaw(param, raw) {
+  if (raw === undefined) return undefined;
+  if (param.options) return param.options.find(([v]) => v === raw)?.[1];
+  if (param.off && raw === 0) return 'Off';
+  return round((raw - (param.offset ?? 0)) * (param.scale ?? 1));
+}
+
+/**
+ * Raw value for a display value. Throws a RangeError with a German message when the value
+ * does not fit. Numbers between two steps are rounded to the nearest step.
+ */
+export function toRaw(param, value) {
+  if (param.options) {
+    const hit = param.options.find(([, name]) => norm(name) === norm(value));
+    if (!hit) throw new RangeError(`„${value}“ gibt es nicht. Erlaubt: ${param.options.map(([, n]) => n).join(', ')}`);
+    return hit[0];
+  }
+  if (param.off && typeof value === 'string' && norm(value) === 'off') return 0;
+  if (typeof value !== 'number' || !Number.isFinite(value)) throw new RangeError(`„${value}“ ist keine Zahl`);
+  const raw = Math.round(value / (param.scale ?? 1) + (param.offset ?? 0));
+  if (raw < param.min || raw > param.max || (param.off && raw === 0)) {
+    throw new RangeError(`${value} liegt außerhalb ${rangeText(param)}`);
+  }
+  return raw;
+}
+
+/** Allowed values as text, e.g. "-50 … +50", "1 … 2000 ms", "Flat, 20 Hz, …". */
+export function rangeText(param) {
+  if (param.options) return param.options.map(([, n]) => n).join(', ');
+  const lo = fromRaw(param, param.off ? 1 : param.min);
+  const hi = fromRaw(param, param.max);
+  const sign = (param.offset ?? 0) > 0 && lo < 0;
+  const fmt = (v) => (sign && v > 0 ? `+${v}` : String(v));
+  const step = param.scale && param.scale !== 1 ? ` (Schritt ${param.scale})` : '';
+  return `${param.off ? 'Off oder ' : ''}${fmt(lo)} … ${fmt(hi)}${param.unit ? ` ${param.unit}` : ''}${step}`;
 }
 
 /** Byte span of each effect block, for reading a whole block back at once. */

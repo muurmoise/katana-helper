@@ -1,8 +1,10 @@
 // Patch library: stored patches and automatic backups, kept in IndexedDB in the browser.
-// Entries hold the patch as offset runs (see serializePatch in patch.js).
+// Entries hold the patch as offset runs (see serializePatch in patch.js). Entries made from a
+// readable preset (preset.js) hold only the bytes the preset sets.
 
 import { fromBase128 } from './sysex.js';
 import { nameBytes, parsePatch, patchName, serializePatch } from './patch.js';
+import { PRESET_FORMAT, presetToPatch } from './preset.js';
 
 export const LIBRARY_FORMAT = 'katana-helper-library';
 const BACKUP_FORMAT = 'katana-helper-backup';
@@ -153,18 +155,33 @@ export class PatchLibrary {
   }
 
   /**
-   * Import a library file or a backup file from the editor ("Backup speichern").
+   * Import a library file, a backup file from the editor ("Backup speichern") or readable
+   * presets (one, or a JSON array of them; docs/preset-guide.md). Text pasted from a chat
+   * may keep its ```json fence. Preset hints go to `onWarning(text)`.
    * Returns the number of added entries.
    */
-  async importJson(text) {
+  async importJson(text, { onWarning = () => {} } = {}) {
     let data;
     try {
-      data = JSON.parse(text);
+      data = JSON.parse(stripFence(text));
     } catch {
       throw new Error('Keine gültige JSON-Datei');
     }
     const items = [];
-    if (data?.format === LIBRARY_FORMAT && Array.isArray(data.patches)) {
+    const presets = Array.isArray(data) ? data : data?.format === PRESET_FORMAT ? [data] : null;
+    if (presets) {
+      if (!presets.length || !presets.every((p) => p?.format === PRESET_FORMAT)) throw new Error('Unbekanntes Dateiformat');
+      presets.forEach((p, i) => {
+        let result;
+        try {
+          result = presetToPatch(p);
+        } catch (e) {
+          throw new Error(presets.length > 1 ? `Preset ${i + 1}: ${e.message}` : e.message);
+        }
+        for (const w of result.warnings) onWarning(`„${result.name}“: ${w}`);
+        items.push({ map: result.map, name: result.name, kind: 'patch', origin: 'Preset', note: result.description, firmware: null });
+      });
+    } else if (data?.format === LIBRARY_FORMAT && Array.isArray(data.patches)) {
       for (const p of data.patches) {
         items.push({ map: parsePatch(p.patch), name: p.name, kind: p.kind === 'backup' ? 'backup' : 'patch', origin: p.origin ?? 'Import', note: p.note ?? '', firmware: p.firmware ?? null, createdAt: p.createdAt });
       }
@@ -185,6 +202,12 @@ export class PatchLibrary {
     }
     return items.length;
   }
+}
+
+/** JSON text without a surrounding Markdown code fence (```json … ```). */
+function stripFence(text) {
+  const m = String(text).trim().match(/^```[\w-]*\s*\n([\s\S]*?)\n?```$/);
+  return m ? m[1] : text;
 }
 
 /** Backup file (absolute addresses like "60 00 00 00") → patch map. */

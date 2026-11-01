@@ -308,3 +308,33 @@ Patch-Backups setzen es nicht zurück. Notiere dir darum zuerst den Ausgangswert
 4. [ ] **„Alle drei nacheinander“** schreibt REC, LIVE, BLEND und danach den
        Ausgangswert.
 5. [ ] **„Ursprünglichen Wert zurück“**, dann „Log kopieren“ oder „Als Datei“.
+
+---
+
+## Teil 8 – Presets aus Claude oder ChatGPT
+
+Lesbare Presets (`docs/preset-guide.md`). Getestet ist bisher nur der Rundweg mit
+unveränderten Werten (`docs/protocol.md` 10.7). Offen ist, ob ein fremdes Preset so
+ankommt und klingt, wie es soll, und ob die neuen Patch-Werte wirken (Noise Suppressor,
+EQ 1/2, Contour, Cab Resonance).
+
+Vorher: „Backup speichern“, im Panel-Kanal testen, Debug-Log offen.
+
+1. [ ] Bibliothek → **„Preset einfügen …“**, das Beispiel aus `docs/preset-guide.md`
+       (Teil F.3, „Puppets Solo“) einfügen, übernehmen.
+2. [ ] Beim Eintrag **„Laden“**. Im Log: „Patch "Puppets Solo" geladen und bestätigt“?
+       Zeigt der Editor BG Lead (unter „Modell“), Booster Tubescreamer, Delay Analog, Reverb
+       Plate?
+3. [ ] Steht der AMP-TYPE-Schalter-Wert auf Lead, das Modell aber auf **BG Lead** (nicht
+       „Lead (Panel)“)? Das prüft die neue Schreibreihenfolge.
+4. [ ] Klingt es nach einem verzerrten Lead-Sound mit leichtem Delay?
+5. [ ] **Noise Suppressor:** Gitarre nicht anfassen. Ist es still? Im Editor gibt es dafür
+       noch keinen Regler; zum Gegentest das Preset mit `"threshold": 0` noch einmal
+       einfügen und laden. Rauscht es dann mehr?
+6. [ ] **EQ 1:** dasselbe mit `"16 kHz": -12` und `"8 kHz": -12`. Wird der Klang dumpfer?
+7. [ ] **Cab Resonance:** `"cabResonance": "Deep"` gegen `"Vintage"`. Hörbarer Unterschied?
+8. [ ] **Contour:** `"contour": { "on": true, "type": 1 }`, dann 2 und 3. Was ändert sich?
+9. [ ] **„Änderungen zurücknehmen“**: Ist der alte Klang wieder da?
+10. [ ] Ein eigenes Preset von Claude oder ChatGPT erzeugen lassen (Teil A der Anleitung)
+        und einfügen. Gab es Fehlermeldungen? Welche?
+11. [ ] Debug → „Als Datei“ und Bescheid geben.

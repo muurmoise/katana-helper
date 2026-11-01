@@ -105,6 +105,8 @@
                 <input id="lib-import" type="file" accept="application/json,.json" />
               </label>
               <button id="lib-export-all" class="secondary small" type="button">Alle exportieren</button>
+              <button id="lib-paste-preset" class="secondary small" type="button">Preset einfügen …</button>
+              <button id="lib-export-preset" class="secondary small" type="button">Klang als Preset</button>
               <label class="check"><input type="checkbox" id="lib-show-backups" checked /> Auto-Backups</label>
             </div>
             <ul id="library-list" class="library-list"></ul>
@@ -128,6 +130,24 @@
           <div class="dialog-buttons">
             <button value="cancel" class="secondary" formnovalidate>Abbrechen</button>
             <button value="save" id="save-confirm">Speichern</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="preset-dialog" class="dialog" aria-labelledby="preset-title">
+        <form id="preset-form">
+          <h2 id="preset-title">Preset einfügen</h2>
+          <p class="dialog-text">
+            Antwort von Claude oder ChatGPT einfügen (JSON im Format „katana-helper-preset“, auch mit
+            ```json-Rahmen). Das Preset landet in der Bibliothek. Mit „Laden“ hörst du es an, ohne
+            etwas zu speichern. Anleitung: <a href="https://github.com/muurmoise/katana-helper/blob/main/docs/preset-guide.md" target="_blank" rel="noopener">docs/preset-guide.md</a>
+          </p>
+          <textarea id="preset-text" class="preset-text" rows="14" spellcheck="false" autocomplete="off"
+            placeholder='{ "format": "katana-helper-preset", "name": "…", "amp": { … } }'></textarea>
+          <p id="preset-error" class="dialog-warning preset-error" role="alert"></p>
+          <div class="dialog-buttons">
+            <button value="cancel" class="secondary" type="button" id="preset-cancel">Abbrechen</button>
+            <button type="submit" id="preset-import">In Bibliothek übernehmen</button>
           </div>
         </form>
       </dialog>

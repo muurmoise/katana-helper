@@ -204,14 +204,24 @@ export function parsePatch(chunks) {
   return map;
 }
 
+/** Offsets of the panel block 60 00 06 xx (amp type switch, panel knobs, colours, chain). */
+const PANEL_BLOCK = [0x06 * 128, 0x07 * 128];
+const inPanel = (o) => o >= PANEL_BLOCK[0] && o < PANEL_BLOCK[1];
+
 /**
  * DT1 writes that put `map` into the temporary patch: runs of at most `max` bytes,
  * leaving out the live LED bytes.
+ *
+ * The panel block (06 xx) goes first. The amp derives values from the panel controls (the
+ * AMP TYPE switch sets the amp model 00 21, an effect knob moves the main parameter of the
+ * effect). Writing the panel first and the detail values after it keeps the details of
+ * `map` instead of the derived ones.
  */
 export function patchWrites(map, { max = 241 } = {}) {
   const offsets = [...map.keys()].filter((o) => !LIVE_OFFSETS.has(o));
   const writes = [];
-  for (const [start, length] of runs(offsets)) {
+  const ordered = [...runs(offsets.filter(inPanel)), ...runs(offsets.filter((o) => !inPanel(o)))];
+  for (const [start, length] of ordered) {
     for (let s = start; s < start + length; s += max) {
       const n = Math.min(max, start + length - s);
       writes.push({

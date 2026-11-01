@@ -13,5 +13,9 @@ Reverse-Engineering-Arbeit. Danke dafür.
 
 Details zu jeder Adresse und ihrer Quelle: [docs/protocol.md](docs/protocol.md).
 
+Die Vorbilder der Amp-Modelle und Effekte in [docs/preset-guide.md](docs/preset-guide.md)
+stammen aus der Dokumentation von Roland/BOSS zum GT-100 (*GT-100 Training Guide*,
+*Owner's Manual*) sowie aus Reviews; die Quellen stehen dort.
+
 BOSS und KATANA sind Marken der Roland Corporation. katana-helper ist ein privates
 Projekt und steht in keiner Verbindung zu Roland/BOSS.

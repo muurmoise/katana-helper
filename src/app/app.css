@@ -1091,3 +1091,32 @@ h3 {
   justify-content: flex-end;
   gap: 8px;
 }
+
+/* ---------------------------------------------------------------- preset dialog */
+
+.preset-text {
+  width: 100%;
+  min-height: 220px;
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--fg);
+  font: 12px/1.4 var(--mono);
+  resize: vertical;
+}
+
+.preset-error {
+  white-space: pre-wrap;
+  max-height: 180px;
+  overflow: auto;
+}
+
+#preset-dialog {
+  width: min(720px, calc(100vw - 32px));
+}
+
+.preset-error:empty {
+  display: none;
+}

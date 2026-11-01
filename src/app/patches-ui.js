@@ -2,6 +2,7 @@
 
 import { CHANNEL_NAMES } from '../lib/describe.js';
 import { patchFromState, patchName } from '../lib/patch.js';
+import { patchToPreset } from '../lib/preset.js';
 import { download, stamp } from './log-ui.js';
 
 const $ = (id) => document.getElementById(id);
@@ -174,6 +175,35 @@ export function mountPatches({ manager, library, editor, connection }) {
   };
   $('lib-show-backups').onchange = renderLibrary;
 
+  // ---- readable presets (docs/preset-guide.md)
+  const presetDialog = $('preset-dialog');
+  $('lib-paste-preset').onclick = () => {
+    $('preset-error').textContent = '';
+    presetDialog.showModal();
+    $('preset-text').focus();
+  };
+  $('preset-cancel').onclick = () => presetDialog.close();
+  $('preset-form').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const warnings = [];
+    try {
+      const n = await library.importJson($('preset-text').value, { onWarning: (w) => warnings.push(w) });
+      for (const w of warnings) connection.log('warn', `Preset: ${w}`);
+      presetDialog.close();
+      $('preset-text').value = '';
+      status(`${n} ${n === 1 ? 'Preset' : 'Presets'} übernommen${warnings.length ? `, ${warnings.length} Hinweise im Debug-Log` : ''}. Mit „Laden“ anhören.`);
+    } catch (e) {
+      // Keep the dialog open so the text can be fixed or replaced.
+      $('preset-error').textContent = e.message;
+    }
+  };
+  $('lib-export-preset').onclick = () => {
+    const map = patchFromState(editor.state);
+    const preset = patchToPreset(map, { description: `Exportiert aus katana-helper, ${CHANNEL_NAMES[connection.info.channel] ?? ''}`.trim() });
+    download(JSON.stringify(preset, null, 2), 'application/json', `${fileName(preset.name)}-preset-${stamp()}.json`);
+    status(`„${preset.name}“ als Preset gespeichert`);
+  };
+
   // ---- save dialog
   const dialog = $('save-dialog');
   const select = $('save-channel');
@@ -217,6 +247,7 @@ export function mountPatches({ manager, library, editor, connection }) {
     renderChannels();
     renderLibrary();
     $('lib-store-current').disabled = !editor.ready || !!manager.busy;
+    $('lib-export-preset').disabled = !editor.ready;
     if (manager.busy) status(`${manager.busy} …`);
   };
   // Knob moves make the editor emit often; rebuild the lists only when something they show

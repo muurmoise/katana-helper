@@ -544,6 +544,53 @@ steuert, steht pro Farbe in `06 36`–`38` (7.3).
 Der Editor zeigt außerdem den **Effekt-Regler am Panel** (7.4). Nach dem Schreiben liest er
 den ganzen Effektblock zurück, weil der Amp den Hauptparameter des Typs mitverstellt.
 
+### 7.7 Weitere Patch-Parameter (für Presets)
+
+Diese Werte gehören zum Patch und hängen nicht an einem Effekt. katana-helper nutzt sie für
+das Preset-Format (`docs/preset-guide.md`, `src/lib/preset.js`). Im Editor gibt es dafür
+noch keine Regler.
+
+| Adresse | Parameter | Werte | Quelle | Status |
+| --- | --- | --- | --- | --- |
+| `60 00 05 66` | Noise Suppressor an/aus | `00`/`01` | Q2 `midi.xml:43022`, Q4 `KatanaAddresses.kt:1152` (aus Q2 übernommen) | gelesen (10.7), UNVERIFIZIERT |
+| `60 00 05 67`, `68` | Noise Suppressor Threshold, Release | 0–100 | Q2 `midi.xml:43026`, `:43029` | gelesen, UNVERIFIZIERT |
+| `60 00 05 70` | Patch Level | 0–100 | Q2 `midi.xml:43039` („Master: Patch Level“) | gelesen (`64` = 100), UNVERIFIZIERT |
+| `60 00 00 40` | EQ 1 an/aus | `00`/`01` | Q2 `midi.xml:37562` | gelesen, UNVERIFIZIERT |
+| `60 00 00 41` | EQ 1 Art | `00` Parametric, `01` Graphic | Q2 `midi.xml:37562ff.` | gelesen, UNVERIFIZIERT |
+| `60 00 00 42`–`4C` | EQ 1 parametrisch: Low Cut, Low Gain, Low-Mid Freq/Q/Gain, High-Mid Freq/Q/Gain, High Gain, High Cut, Level | Listen wie MOD Para EQ (7.6), Gains ±20 dB | Q2 `midi.xml:37570ff.` | gelesen, UNVERIFIZIERT |
+| `60 00 00 4D`–`57` | EQ 1 grafisch: 31 Hz … 16 kHz, Level | `00`–`30` = −12 … +12 dB in **0,5-dB-Schritten** (anders als der Graphic EQ in MOD/FX) | Q2 `midi.xml:37698–37728` | gelesen, UNVERIFIZIERT |
+| `60 00 00 60`–`77` | EQ 2, gleicher Aufbau wie EQ 1 | wie EQ 1 | Q2 `midi.xml:37739–37905`, Q3 `presets_addrs.yaml` (`UserPatch%Eq(2)`, Größe 24) | gelesen, UNVERIFIZIERT |
+| `60 00 06 22` | Position EQ 1 | `00` Amp In, `01` Amp Out | Q2 `midi.xml:43559`, Q4 | gelesen, UNVERIFIZIERT |
+| `60 00 06 19` | Position EQ 2 | `00` Amp In, `01` Amp Out (Q2: „PreAmp In/Pre Amp Out“) | Q2 `midi.xml:43540`, Q4 | gelesen, UNVERIFIZIERT |
+| `60 00 06 16` | Contour an/aus | `00`/`01` | Q2 `midi.xml:43521`, Q4 `KatanaAddresses.kt:1161` | gelesen, UNVERIFIZIERT |
+| `60 00 06 17` | Contour-Auswahl | `00`–`02` = Contour 1–3 | Q2 `midi.xml:43525` | gelesen, UNVERIFIZIERT |
+| `60 00 06 43` | Cab Resonance | `00` Vintage, `01` Modern, `02` Deep | Q2 `midi.xml:44045`, `stompbox_cab.cpp:87` | gelesen (`00`), UNVERIFIZIERT |
+
+**Gegenprobe über Standardwerte:** Q2 nennt für einige Parameter im Attribut `abbr` einen
+Startwert. Für EQ 1 und EQ 2 sind das Lo-Mid Freq `0E` (500 Hz), Hi-Mid Freq `17` (4 kHz),
+Q `01` (1) und Gains `14` (0 dB). Genau diese Werte stehen am eigenen Amp an diesen
+Adressen (10.7). Die Adressen sind damit sehr wahrscheinlich richtig. Ob die Werte so
+klingen wie benannt, ist offen (`device-test.md` Teil 8).
+
+**Nicht im Preset-Format, weil unklar oder zu riskant:**
+
+- Kette `60 00 06 00`–`13` (Reihenfolge der 20 Blöcke) und `06 20` (vordefinierte Ketten),
+  Q2 `midi.xml:43074`, `:43552`.
+- Pedal FX `60 00 05 50`–`61`, Send/Return `05 62`–`65` (Q2 `midi.xml:42946`, `:43008`).
+- Solo des Amps: zwei Kandidaten, `60 00 00 2B`/`2C` (Preamp) und `60 00 06 14`/`15` (Panel).
+  Q4 hat `00 2B` am Amp getestet, ohne hörbare Wirkung. Der Booster hat ein eigenes Solo
+  (`00 15`/`16`, 7.6).
+- Contour-Feinwerte `60 00 0F 30`ff. und Freq Shift `06 1A`. Sie liegen außerhalb des
+  Patch-Dumps bzw. gelten nur für die aktive Kontur (Q4 `BACKLOG.md`).
+- Preamp-Parameter `00 29`–`3F` (Bright, Gain SW, Custom-Amp). Q2 nennt sie, am MkII-Panel
+  gibt es sie nicht.
+
+**Schreibreihenfolge beim Laden eines Patches oder Presets:** zuerst der Panel-Block
+`60 00 06 xx`, danach alles andere in aufsteigender Reihenfolge (`patchWrites` in
+`src/lib/patch.js`). Der Amp leitet aus Panel-Werten andere Werte ab: Der AMP-TYPE-Schalter
+setzt `00 21`, ein Effektregler verstellt den Hauptparameter (7.4). So gelten am Ende die
+Detailwerte des Patches. Mit unveränderten Werten am Amp geprüft (10.7).
+
 ---
 
 ## 8. Beispielnachrichten
@@ -735,6 +782,20 @@ eingestellten Wert:
   Der Amp nimmt den Befehl an und meldet nichts zurück, wie bei Patch-Adressen.
 - Nicht getestet: andere Werte schreiben, Klang, Verhalten nach Aus- und Einschalten
   (`device-test.md` Teil 7).
+
+### 10.7 Presets: Rundweg und Schreibreihenfolge, 2026-11-01
+
+Unsichtbare Chrome-Instanz, Mac, Panel-Kanal (Deluxe Crunch, alle Effekte aus):
+
+- Ganzen Patch gelesen, in ein Preset umgewandelt (`patchToPreset`) und zurück in Bytes
+  (`presetToPatch`). Ergebnis: 122 Bytes, **0 Abweichungen** zum Amp, 0 Hinweise.
+- Gelesene Werte der neuen Adressen (7.7): Noise Suppressor aus, Threshold 5, Release 50.
+  EQ 1 und EQ 2 aus, parametrisch, 500 Hz / 4 kHz, Q 1, alle Gains 0 dB. Position EQ 1 Amp
+  In, EQ 2 Amp Out. Contour aus, 1. Cab Resonance Vintage. Patch Level 100.
+- Diese 122 Bytes mit unveränderten Werten zurückgeschrieben, Panel-Block zuerst (26
+  Nachrichten, die erste an `60 00 06 16`). Der Amp hat alles bestätigt („geladen und
+  bestätigt“, keine Abweichung, Editor „Keine Änderungen“).
+- Nicht getestet: geänderte Werte, Klang (`device-test.md` Teil 8).
 
 ## 11. Offene Punkte
 

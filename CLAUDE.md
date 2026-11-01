@@ -173,6 +173,34 @@ Regeln im Code:
 Offen: Martins Hörtest nach `docs/device-test.md` Teil 7, danach Status in
 `docs/protocol.md` 12 nachtragen.
 
+### Zusatz – Presets für Claude/ChatGPT ← umgesetzt, Test am Amp durch Martin ausstehend
+
+Eingeschoben am 2026-11-01. Lesbares Preset-Format `katana-helper-preset` (Namen und
+Anzeigewerte statt Bytes), damit ein Sprachmodell Klänge entwerfen kann. Anleitung für das
+Modell: `docs/preset-guide.md`.
+
+| Datei | Aufgabe |
+| --- | --- |
+| `src/lib/preset.js` | `presetToPatch` (prüfen, in Patch-Map wandeln, Hinweise), `patchToPreset`, `presetReference` (Referenz für die Anleitung) |
+| `src/lib/effect-params.js` | dazu: `toRaw`/`fromRaw`/`rangeText` (Anzeigewert ↔ Rohwert), `PARAM_KINDS`, `VALUE_LISTS` |
+| `src/lib/library.js` | `importJson` nimmt auch Presets (einzeln oder als Array, auch mit ```json-Rahmen) |
+| `src/app/patches-ui.js` | „Preset einfügen …“ (Dialog), „Klang als Preset“ |
+| `scripts/preset-doc.mjs` | `npm run docs:preset`: Referenz in `docs/preset-guide.md` neu erzeugen |
+
+Regeln im Code:
+- Ein Preset wird zu einer **Teil-Patch-Map**. „Laden“ schreibt sie auf den aktuellen Klang.
+  Fehlende Effekte, Noise Suppressor, EQs und Contour werden ausgeschaltet; fehlende Regler
+  bleiben (mit Hinweis), Cab Resonance und Patch Level bleiben unverändert.
+- `patchWrites` schreibt den Panel-Block `06 xx` zuerst, dann den Rest. Gilt für alle
+  Patch-Ladevorgänge (`docs/protocol.md` 7.7).
+- Die Referenz in `docs/preset-guide.md` ist generiert. Nach Änderungen an Typen, Reglern
+  oder Wertebereichen `npm run docs:preset`; ein Test prüft, dass sie aktuell ist, und dass
+  das Beispiel ohne Fehler und Hinweise durchläuft.
+- Neue Patch-Adressen (Noise Suppressor, EQ 1/2, Contour, Cab Resonance, Patch Level) sind
+  UNVERIFIZIERT (`docs/protocol.md` 7.7).
+
+Offen: Martins Test nach `docs/device-test.md` Teil 8.
+
 ## Konventionen
 
 - `docs/protocol.md` ist die verbindliche Referenz für alle SysEx-Adressen. Neue oder geänderte
@@ -194,6 +222,7 @@ npm run dev      # Entwicklungsserver, http://localhost:5173/katana-helper/
 npm test         # Vitest
 npm run build    # nach dist/, mit sw.js und manifest.webmanifest
 npm run preview  # fertigen Build testen, http://localhost:4173/katana-helper/
+npm run docs:preset  # Referenz in docs/preset-guide.md neu erzeugen
 ```
 
 Deploy: Push auf `main` → GitHub Actions (`.github/workflows/deploy.yml`) → GitHub Pages.

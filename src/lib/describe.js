@@ -127,6 +127,21 @@ field(P(0x06, 0x5c), 'LED Variation', 1, onOff);
 const led = (d) => ['aus', 'grün', 'rot', 'gelb'][d[0]] ?? `? (${hex(d)})`;
 ['Booster', 'MOD', 'FX', 'Delay', 'Reverb'].forEach((n, i) => field(P(0x06, 0x5d + i), `LED ${n}`, 1, led));
 
+// Further patch sections (docs/protocol.md 7.7), used by presets.
+field(P(0x00, 0x40), 'EQ 1 an/aus', 1, onOff);
+field(P(0x00, 0x41), 'EQ 1 Typ', 1, pick(['Parametric', 'Graphic']));
+field(P(0x00, 0x60), 'EQ 2 an/aus', 1, onOff);
+field(P(0x00, 0x61), 'EQ 2 Typ', 1, pick(['Parametric', 'Graphic']));
+field(P(0x05, 0x66), 'Noise Suppressor an/aus', 1, onOff);
+field(P(0x05, 0x67), 'Noise Suppressor Threshold', 1, number);
+field(P(0x05, 0x68), 'Noise Suppressor Release', 1, number);
+field(P(0x05, 0x70), 'Patch Level', 1, number);
+field(P(0x06, 0x16), 'Contour an/aus', 1, onOff);
+field(P(0x06, 0x17), 'Contour', 1, pick(['1', '2', '3']));
+field(P(0x06, 0x19), 'EQ 2 Position', 1, pick(['Amp In', 'Amp Out']));
+field(P(0x06, 0x22), 'EQ 1 Position', 1, pick(['Amp In', 'Amp Out']));
+field(P(0x06, 0x43), 'Cab Resonance', 1, pick(['Vintage', 'Modern', 'Deep']));
+
 // Effect detail parameters (effect-params.js). MOD/FX addresses belong to one type each;
 // booster, delay and reverb parameters are shared by all their types.
 const EFFECT_NAMES = { booster: 'Booster', mod: 'MOD', fx: 'FX', delay: 'Delay', delay2: 'Delay 2', reverb: 'Reverb' };
