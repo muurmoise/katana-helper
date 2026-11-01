@@ -413,13 +413,7 @@ Quelle: Q2 `midi.xml:42864ff.`
 
 ---
 
-## 10. Offene Punkte – erster Gerätetest
+## 10. Offene Punkte
 
-1. **Transport:** Erscheint der Katana in Chrome Desktop (mit BOSS-Treiber) als Web-MIDI-Port?
-   Mit SysEx-Berechtigung? Und in Chrome Android – oder nur per WebUSB?
-2. Identity Request schicken und Antwort mit 2.2 vergleichen.
-3. Edit-Mode an → Regler am Gerät drehen → kommen DT1-Nachrichten an?
-4. Farbwerte `00`/`01`/`02` an der LED prüfen (7.3).
-5. Kanalwechsel `00 01 00 00` mit allen 9 Werten.
-6. Delay 2 an/aus und Typ (`60 00 05 20`/`21`).
-7. Erst danach: Speichern (`7F 00 01 04`) – überschreibt einen Kanal.
+Die Checkliste für den Gerätetest und alle offenen Protokollfragen stehen jetzt in
+[`device-test.md`](device-test.md).
