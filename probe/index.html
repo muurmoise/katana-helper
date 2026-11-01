@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Katana USB-Test</title>
+    <link rel="stylesheet" href="/src/probe/probe.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Katana USB-Test</h1>
+      <p class="hint">
+        Prüft, ob dieser Browser den BOSS Katana MkII per WebUSB oder Web MIDI erreicht.
+        Sendet nur Lesebefehle und den Edit-Mode, nichts wird am Amp gespeichert.
+      </p>
+
+      <section>
+        <h2>Umgebung</h2>
+        <dl id="env"></dl>
+      </section>
+
+      <section>
+        <h2>WebUSB</h2>
+        <div class="buttons">
+          <button id="usb-choose">1. Gerät wählen</button>
+          <button id="usb-connect" disabled>2. Verbinden</button>
+          <button id="usb-sequence" disabled>3. Test-Sequenz senden</button>
+          <button id="usb-backup" disabled>Patch auslesen (Backup)</button>
+          <button id="usb-release" class="secondary" disabled>Edit-Mode aus und Gerät freigeben</button>
+        </div>
+        <label class="check"><input type="checkbox" id="usb-raw" checked /> USB-Rohdaten loggen</label>
+      </section>
+
+      <section>
+        <h2>Web MIDI</h2>
+        <div class="buttons">
+          <button id="midi-open">1. Web MIDI öffnen</button>
+        </div>
+        <div class="ports">
+          <label>Eingang <select id="midi-in" disabled></select></label>
+          <label>Ausgang <select id="midi-out" disabled></select></label>
+        </div>
+        <div class="buttons">
+          <button id="midi-sequence" disabled>2. Test-Sequenz senden</button>
+          <button id="midi-backup" disabled>Patch auslesen (Backup)</button>
+          <button id="midi-editoff" class="secondary" disabled>Edit-Mode aus</button>
+        </div>
+      </section>
+
+      <section>
+        <div class="log-head">
+          <h2>Log</h2>
+          <div class="buttons inline">
+            <button id="log-copy">Log kopieren</button>
+            <button id="log-save" class="secondary">Als Datei</button>
+            <button id="log-clear" class="secondary">Leeren</button>
+          </div>
+        </div>
+        <pre id="log" aria-live="polite"></pre>
+      </section>
+    </main>
+    <script type="module" src="/src/probe/probe.js"></script>
+  </body>
+</html>
